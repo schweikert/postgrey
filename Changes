@@ -1,4 +1,8 @@
-* 2004-06-08: version 1.6
+* 2004-06-11
+
+  - bugfix: wrong syslog call ('warn' instead of 'warning')
+
+* 2004-06-11: version 1.6
 
   - rewritten verp substitution code
   - when doing keys maintenance: report about how many keys there where before

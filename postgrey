@@ -175,7 +175,7 @@ sub pre_loop_hook()
 
     # be sure to put in syslog any warnings / fatal errors
     if($self->{server}{log_file} eq 'Sys::Syslog') {
-        $SIG{__WARN__} = sub { Sys::Syslog::syslog('warn', "warning: $_[0]") };
+        $SIG{__WARN__} = sub { Sys::Syslog::syslog('warning', "warning: $_[0]") };
         $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', "fatal: $_[0]"); die @_; };
     }
 

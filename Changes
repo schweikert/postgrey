@@ -1,3 +1,8 @@
+* 2004-07-05: version 1.14rc1
+
+  - changed default --max-age to 30, since the db should shrink a lot
+    because of the --retry-window functionality.
+
 * 2004-07-05: version 1.13
 
   - strip sender address extension (everything after '+'), so that more

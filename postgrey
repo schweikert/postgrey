@@ -267,11 +267,11 @@ sub pre_loop_hook()
     # write files with mode 600
     umask 0077;
 
-    # unix socket permissions should be 777
+    # unix socket permissions should be 666
     if($self->{server}{proto} eq 'unix') {
         my $unix_path = $self->{server}{port};
         $unix_path =~ s/|unix$//;
-        chmod 0777, $unix_path;
+        chmod 0666, $unix_path;
     }
 
     # ensure that only one instance of postgrey is running

@@ -269,8 +269,8 @@ sub pre_loop_hook()
 
     # unix socket permissions should be 666
     if($self->{server}{proto} eq 'unix') {
-        my $unix_path = $self->{server}{port};
-        $unix_path =~ s/|unix$//;
+        my $unix_path = $self->{server}{port}[0];
+        $unix_path =~ s/\|unix$//;
         chmod 0666, $unix_path;
     }
 

@@ -165,10 +165,12 @@ sub do_maintenance($$)
         while (my ($key, $value) = each %$db) {
             $nr_keys_before++;
             my ($first, $last) = split(/,/,$value);
+            # last-seen passed max-age
             if($now - $last > $max_age) {
                 delete $db->{$key};
             }
-            elsif($first == $last and $now - $last > $retry_window) {
+            # no successful entry yet and last seen passed retry-window
+            elsif($last - $first < $self->{postgrey}{delay} and $now - $last > $retry_window) {
                 delete $db->{$key};
             }
             else {
@@ -252,10 +254,12 @@ sub smtpd_access_policy($$)
         if($last - $first >= $self->{postgrey}{delay}) {
             $last_was_successful=1;
         }
-        # discard stored first-seen if it is the first retrial and
-        # it is beyond the retry_window
-        if($first == $last and $now-$first > $self->{postgrey}{retry_window}) {
-            $first = $now;
+        else {
+            # discard stored first-seen if it is the first retrial and
+            # it is beyond the retry_window
+            if($now-$first > $self->{postgrey}{retry_window}) {
+                $first = $now;
+            }
         }
     }
     else {

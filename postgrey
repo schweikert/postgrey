@@ -20,14 +20,34 @@ use vars qw(@ISA);
 
 my $VERSION = '1.0';
 
-sub do_verp_substitutions($)
+sub do_sender_substitutions($$)
 {
-    my ($addr) = @_;
+    my ($self, $addr) = @_;
+
+    # replace numbers in VERP addresses with '#' so that
+    # we don't create a new key for each mail
     my ($user, $domain) = split(/@/, $addr, 2);
     defined $domain or return $addr;
     # replace numbers with #
     $user =~ s/\b\d+\b/#/g;
     return "$user\@$domain";
+}
+
+sub do_client_substitutions($$$)
+{
+    my ($self, $ip, $revdns) = @_;
+
+    # --lookup-by-subnet:
+    if($self->{postgrey}{lookup_by_subnet}) {
+        return $ip if $revdns eq 'unknown';
+        my @ip=split(/\./, $ip);
+        return $ip unless defined $ip[3];
+        # skip if it contains the last two IP numbers in the hostname
+        # (we assume it is a pool of dialup addresses of a provider)
+        return $ip  if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
+        return join('.', $ip[0..2]);
+    }
+    return $ip;
 }
 
 sub do_maintenance($$)
@@ -81,8 +101,11 @@ sub smtpd_access_policy($$)
     my $now = time();
 
     # lookup
-    my $sender = do_verp_substitutions($attr->{sender});
-    my $key    = lc "$attr->{client_address}/$sender/$attr->{recipient}";
+    my $sender = $self->do_sender_substitutions($attr->{sender});
+    my $client = $self->do_client_substitutions(
+        $attr->{client_address}, $attr->{client_name}
+    );
+    my $key    = lc "$client/$sender/$attr->{recipient}";
     my $val    = $db->{$key};
     my $first  = defined $val ? (split(/,/,$val))[0] : $now;
 
@@ -113,8 +136,9 @@ sub main()
     # parse options
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
-        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'dbdir=s', 'pidfile=s',
-        'delay=i', 'max-age=i') or exit(1);
+        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
+        'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
+        'lookup-by-subnet') or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
     if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
@@ -140,8 +164,8 @@ sub main()
             pid_file        => $opt{daemonize} ? $opt{pidfile} : undef,
             log_level       => $opt{verbose} ? 4 : 2,
             log_file        => $opt{daemonize} ? 'Sys::Syslog' : undef,
+            syslog_logsock  => $^O eq 'solaris' ? 'inet' : 'unix',
             syslog_facility => 'mail',
-            syslog_logsock  => 'inet',
             syslog_ident    => 'postgrey',
         },
         postgrey => {
@@ -150,6 +174,7 @@ sub main()
             max_age         => $opt{'max-age'} || 14,
             last_maint      => time,
             last_maint_keys => 0, # do it on the first night
+            lookup_by_subnet => $opt{'lookup-by-subnet'},
         },
     }, 'postgrey';
 
@@ -260,6 +285,7 @@ B<postgrey> [I<options>...]
      --delay=N          greylist for N seconds (default: 300)
      --max-age=N        delete entries older than N days since the last time
                         that they have been seen (default: 14)
+     --lookup-by-subnet strip the last 8 bits from IP addresses
 
 =head1 DESCRIPTION
 

@@ -1,8 +1,10 @@
-* 2004-06-18
+* 2004-06-22
 
   - bugfix: wrong syslog call ('warn' instead of 'warning')
   - update whitelist
   - allow input with cr-lf lines for testing (Tom Baker)
+  - implemented --lookup-by-subnet (Tom Baker)
+  - use 'unix' syslog socket on non-solaris platforms (Matt Egan)
 
 * 2004-06-11: version 1.6
 

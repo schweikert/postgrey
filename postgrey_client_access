@@ -24,3 +24,5 @@ mail.hhlaw.com			OK
 prd051.appliedbiosystems.com	OK
 # 2004-06-17: swissre.com (no retry)
 chr7ca78.swissre.com		OK
+# 2004-06-17: dowjones.com newsletter (no retry)
+returns.dowjones.com		OK

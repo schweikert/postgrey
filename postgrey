@@ -18,7 +18,7 @@ use BerkeleyDB;
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-'$Revision: 5 $ ' =~ /Revision: (\S*)/;
+'$Revision: 6 $ ' =~ /Revision: (\S*)/;
 my $Revision = $1;
 
 # local policy about what users want greylisting:
@@ -161,9 +161,9 @@ sub main()
             syslog_logsock => 'inet',
         },
         postgrey => {
-            delay          => $opt{delay}        || 600,
-            dbdir          => $opt{dbdir}        || '/var/spool/postfix/postgrey',
-            max_age        => $opt{'max-age'}    || 14,
+            delay          => $opt{delay}     || 600,
+            dbdir          => $opt{dbdir}     || '/var/spool/postfix/postgrey',
+            max_age        => $opt{'max-age'} || 14,
             last_maint     => time(),
         },
     }, 'postgrey';
@@ -186,8 +186,8 @@ sub pre_loop_hook()
     # you make the mistake of running two instances with the same db file
     my $env = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
-        -Flags    => DB_CREATE|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG|DB_INIT_LOCK,
-        -SetFlags => DB_AUTO_COMMIT|DB_LOG_AUTOREMOVE,
+        -Flags    => DB_CREATE|DB_RECOVER|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG|DB_INIT_LOCK,
+        -SetFlags => DB_AUTO_COMMIT|DB_LOG_AUTOREMOVE|DB_TXN_NOSYNC,
     ) or die "ERROR: can't create DB environment: $!\n";
 
     tie(%{$self->{postgrey}{db}}, 'BerkeleyDB::Btree',

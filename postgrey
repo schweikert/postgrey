@@ -26,7 +26,7 @@ sub read_clients_whitelists($)
 
     my @whitelist_clients = ();
     my @whitelist_ips = ();
-    for my $f (@{$self->{postgrey}{whitelist_clients_file}}) {
+    for my $f (@{$self->{postgrey}{whitelist_clients_files}}) {
         if(open(CLIENTS, $f)) {
             while(<CLIENTS>) {
                 s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
@@ -62,7 +62,7 @@ sub read_recipients_whitelists($)
     my ($self) = @_;
 
     my @whitelist_recipients = ();
-    for my $f (@{$self->{postgrey}{whitelist_recipients_file}}) {
+    for my $f (@{$self->{postgrey}{whitelist_recipients_files}}) {
         if(open(RECIPIENTS, $f)) {
             while(<RECIPIENTS>) {
                 s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
@@ -335,7 +335,7 @@ sub main()
 # reload whitelists on HUP
 sub sig_hup {
     my $self = shift;
-    $self->log(2, "HUP received: reload whitelists...");
+    $self->log(2, "HUP received: reloading whitelists...");
     $self->read_clients_whitelists();
     $self->read_recipients_whitelists();
 }

@@ -1,3 +1,10 @@
+* 2004-07-02: version 1.12
+
+  - support IPs in the postgrey_whitelist_clients file (Tom Baker)
+  - new version of postgreyreport (Tom Baker)
+  - update whitelist
+  - workaround Perl 5.8.0 bug (Matt Egan)
+
 * 2004-06-29: version 1.11
 
   - support for regular expressions in whitelists

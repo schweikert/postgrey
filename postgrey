@@ -25,7 +25,8 @@ sub read_whitelists($)
     my ($self) = @_;
 
     # clients
-    my @whitelist_clients;
+    my @whitelist_clients = ();
+    my @whitelist_ips = ();
     if(open(CLIENTS, $self->{postgrey}{whitelist_clients_file})) {
         while(<CLIENTS>) {
             s/^\s+//; s/\s+$//;
@@ -35,7 +36,12 @@ sub read_whitelists($)
                 # regular expression
                 push @whitelist_clients, qr{$1}i;
             }
-            elsif(/^[^\s\/]+$/) {
+            elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
+                # IP address or part of it
+                push @whitelist_ips, qr{^$_};
+            }
+            # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
+            elsif(/^\S+$/) {
                 push @whitelist_clients, qr{\Q$_\E$}i;
             }
             else {
@@ -48,9 +54,10 @@ sub read_whitelists($)
     }
     close(CLIENTS);
     $self->{postgrey}{whitelist_clients} = \@whitelist_clients;
+    $self->{postgrey}{whitelist_ips}     = \@whitelist_ips;
 
     # recipients
-    my @whitelist_recipients;
+    my @whitelist_recipients = ();
     if(open(RECIPIENTS, $self->{postgrey}{whitelist_recipients_file})) {
         while(<RECIPIENTS>) {
             s/^\s+//; s/\s+$//;
@@ -169,6 +176,9 @@ sub smtpd_access_policy($$)
     # whitelists
     for my $w (@{$self->{postgrey}{whitelist_clients}}) {
         return 'dunno' if $attr->{client_name} =~ $w;
+    }
+    for my $w (@{$self->{postgrey}{whitelist_ips}}) {
+        return 'dunno' if $attr->{client_address} =~ $w;
     }
     for my $w (@{$self->{postgrey}{whitelist_recipients}}) {
         return 'dunno' if $attr->{recipient} =~ $w;

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-# postgrey-report by tbaker@bakerfl.org
-# bits and peices of code taken from postgrey 1.6 ( http://isg.ee.ethz.ch/tools/postgrey/ )
+# postgreyreport by tbaker@bakerfl.org
+# bits and peices of code taken from postgrey 1.11 ( http://isg.ee.ethz.ch/tools/postgrey/ )
 
 package postgreyreport;
 use strict;
@@ -9,7 +9,7 @@ use BerkeleyDB;
 use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Daemonize qw( get_uid get_gid set_uid set_gid );
 use Pod::Usage;
-my $VERSION='1.6 (-4 20040618)';
+my $VERSION='1.11.1 (20040701)';
 
 # used in maillog processing
 my $RE_revdns_ip   	= qr/ ([^\[\s]+)\[(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]/;	# ptr[1.2.3.4]
@@ -24,9 +24,9 @@ my %opt = (
 	user 			=> 'postgrey',
 	dbdir 			=> '/var/spool/postfix/postgrey',
 	delay			=> 300,
-	return_string		=> 'Greylisted for',	# match on this string
+	return_string		=> 'Greylisted',	# match on this string
 
-	check_sender		=> '',			# = mx,a,mx/24,a/24 # todo=spf - used Net::DNS
+	check_sender		=> '',			# = mx,a,mx/24,a/24 # todo=spf - uses Net::DNS
 	show_tries		=> 0,			# number of greylist attempts within --delay
 	seperate_by_subnet	=> '',			# if not blank output this string for every new /24
 	seperate_by_ip	   	=> '',			# if not blank output this string for every new IP
@@ -41,7 +41,7 @@ my %opt = (
 sub main
 {
 	GetOptions(\%opt, 
-		'help|h', 'version',
+		'help|h', 'version', 'man',
 		'delay=s', 'user|u', 'dbdir=s', 
 		'debug_db', 'debug_re=s', 'v+',
 		'return_string=s',
@@ -50,8 +50,9 @@ sub main
 		'seperate_by_subnet=s', 'seperate_by_ip=s',  
 		'single_line!',
 		) or exit(1);
-	if ($opt{help})   	{ pod2usage(-exitstatus => 0, -verbose => 2) }
-	if ($opt{version})	{ print "postgrey-report $VERSION\n"; exit(0) }
+	if($opt{help})     { pod2usage(1) }
+	if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
+	if ($opt{version})	{ print "postgreyreport $VERSION\n"; exit(0) }
 
 	setup_debug();		 # display key/value pairs from db
 	
@@ -169,8 +170,8 @@ sub find_and_sort_fatal
 		next unless (/$opt{return_string}/o);			# only look at greylisted lines
 		next unless (/$RE_triplet/o);				# extract the triplet
 		my ($revdns,$ipaddr,$sender,$recipient) = ($1,$2,$3,$4);
-		$sender    = do_verp_substitutions($sender);		
-		my $subnet = do_client_substitutions($revdns,$ipaddr);	# 1.2.3.0
+		$sender    = do_sender_substitutions($sender);		
+		my $subnet = do_client_substitutions($ipaddr,$revdns);	# 1.2.3.0
 		my $key    = lc "$ipaddr/$sender/$recipient";		# postgrey key
 		my $subkey = lc "$subnet/$sender/$recipient";		# subnet key 1.2.3.0/sender/recipient
 		$triplets->{$key}{counter}++;				# increase counter for this triplet
@@ -218,10 +219,13 @@ sub find_and_sort_fatal
 		if (   
 		      ( defined $lapsed_ip or defined $lapsed_subnet )  
 			and
-		    (!( ($lapsed_ip > $opt{delay} ) or ($lapsed_subnet > $opt{delay}) ) )   
+		    (!( ($lapsed_ip >= $opt{delay} ) or ($lapsed_subnet >= $opt{delay}) ) )   
 		   )    
 		{
 			push (@greyfatal, $key); 	# if lapsed time less than --delay, then it was a fatal triplet
+		} elsif (( ! defined $lapsed_ip ) and ( ! defined $lapsed_subnet ))
+		{
+			push (@greyfatal, $key); 	# if neither is found in the db it must have been removed.
 		}
 	}
 	
@@ -343,19 +347,19 @@ sub drop_priv
 	my ($user) = @_;
 	### drop privileges
 	eval{
-	if( $user ne $> ){
-	print "Setting uid to \"$user\"\n";
-	set_uid( $user );
-	}
+		if( $user ne $> ){
+			# print "Setting uid to \"$user\"\n";
+		set_uid( $user );
+		}
 	};
 	if( $@ ){
-	if( $> == 0 ){
-	die $@;
-	} elsif( $< == 0){
-	print "NOTICE: Effective UID changed, but Real UID is 0: $@\n";
-	}else{
-	print $@."\n";
-	}
+		if( $> == 0 ){
+			die $@;
+		} elsif( $< == 0){
+			# print "NOTICE: Effective UID changed, but Real UID is 0: $@\n";
+		}else{
+			print $@."\n";
+		}
 	}
 }
 
@@ -376,10 +380,13 @@ sub setup_dbm
 	return \%db;
 }
 	
-# from postgrey 1.6 http://isg.ee.ethz.ch/tools/postgrey/    
-sub do_verp_substitutions($)
+
+# from postgrey 1.11 http://isg.ee.ethz.ch/tools/postgrey/    
+sub do_sender_substitutions($)
 {
     my ($addr) = @_;
+    # replace numbers in VERP addresses with '#' so that
+    # we don't create a new key for each mail
     my ($user, $domain) = split(/@/, $addr, 2);
     defined $domain or return $addr;
     # replace numbers with #
@@ -387,22 +394,19 @@ sub do_verp_substitutions($)
     return "$user\@$domain";
 }
 
-# --lookup_by_subnet support
+# from postgrey 1.11 http://isg.ee.ethz.ch/tools/postgrey/    
 sub do_client_substitutions($$)
 {
-        my ($revdns,$ip) = @_;
-        
-        return $ip if ($revdns eq 'unknown');
-        
-        # skip if xxx1-2-3-4xxxxx or xxx1.2.3.4xxxxx
-        return $ip  if ( $revdns =~ /\d{1,3}[\.\-]\d{1,3}[\.\-]\d{1,3}[\.\-]\d{1,3}/ );
-        
-        if ($ip =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}/ )
-        {
-        	return "$1.0";
-        }
-        return $ip;
-   
+    	my ($ip, $revdns) = @_;
+
+	# --lookup-by-subnet:
+	return $ip if $revdns eq 'unknown';
+	my @ip=split(/\./, $ip);
+	return $ip unless defined $ip[3];
+	# skip if it contains the last two IP numbers in the hostname
+	# (we assume it is a pool of dialup addresses of a provider)
+	return $ip  if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
+	return join('.', @ip[0..2], '0');
 }
 
 
@@ -443,11 +447,11 @@ __END__
 
 =head1 NAME
 
-postgrey-report - Fatal report for Postfix Greylisting Policy Server
+postgreyreport - Fatal report for Postfix Greylisting Policy Server
 
 =head1 SYNOPSIS
 
-B<postgrey-report> [I<options>...]
+B<postgreyreport> [I<options>...]
 
  -h, --help                   display this help and exit
      --version		      display version and exit
@@ -465,7 +469,7 @@ B<postgrey-report> [I<options>...]
 
 =head1 DESCRIPTION
 
-postgrey-report opens postgrey.db as read-only; reads a maillog via STDIN, 
+postgreyreport opens postgrey.db as read-only; reads a maillog via STDIN, 
 extracts the triplets for any Greylisted lines and looks them up in postgrey.db. 
 if the difference in first and last time seen is less than --delay=N then the 
 triplet is considered fatal and displayed to STDOUT
@@ -482,18 +486,18 @@ through will show up in the report for all of the attempted source IPs
 
 =head2 USAGE
 
-It is best to run postgrey-report against a maillog that is at least several hours old (yesterdays?) 
+It is best to run postgreyreport against a maillog that is at least several hours old (yesterdays?) 
 ( you be the judge on how old is acceptable ). if you run the report against a live maillog you are
 not giving legit MTA's enough time to try again and you will have lots of inaccurate information.
 
 =item * Ex usage:
 
-	zcat /var/log/maillog.0.gz | ./postgrey-report.pl [options] > postgrey-report.log
+	zcat /var/log/maillog.0.gz | ./postgreyreport [options] > postgreyreport.log
 
 	or
 	
 	zcat /var/log/maillog.0.gz | \
-	./postgrey-report.pl --nosingle_line --check_sender=mx,a \
+	./postgreyreport --nosingle_line --check_sender=mx,a \
 	--seperate_by_subnet=":==================\n"
 	# 94 "=" total, some were omitted for clearity
 
@@ -521,6 +525,31 @@ smtpout.mac.com       17.250.248.88
    MX                             legituser@mac.com                      user6@recipient7.com 
 :============================================================================================
 
+
+=head1 HISTORY
+
+B<1.11.1 20040701>
+
+=over 4
+
+Missing keys from DB are considered fatal triplets and included in report
+
+Changed --delay testing from "greater than" to "greater than or equal to"
+
+Fixed --help and --man switches
+
+Removed setuid Notice
+
+=back
+
+B<1.6.4  20040618>
+
+=over 4
+
+Initial Public Version (postgrey/contrib)
+
+=back
+              
 
 =head1 AUTHOR
 

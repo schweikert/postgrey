@@ -1,5 +1,5 @@
 MAJOR = 1
-MINOR = 11
+MINOR = 12
 VERSION = $(MAJOR).$(MINOR)
 PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 
@@ -15,7 +15,7 @@ pub/postgrey-$(VERSION).tar.gz: version
 	cp COPYING Changes README postgrey-$(VERSION)
 	cp postgrey_whitelist_clients postgrey-$(VERSION)
 	cp postgrey_whitelist_recipients postgrey-$(VERSION)
-	cp contrib/postgrey-report postgrey-$(VERSION)/contrib
+	cp contrib/postgreyreport postgrey-$(VERSION)/contrib
 	[ -d pub ] || mkdir pub
 	gtar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)

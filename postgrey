@@ -60,11 +60,23 @@ sub do_maintenance($$)
     }
 
     # remove old keys
-    for my $key (keys %$db) {
-        my $last = (split(/,/,$db->{$key}))[1];
-        if($now - $last > $self->{postgrey}{max_age}) {
-            delete $db->{$key};
+    # this is very expensive:  We might refuse to speak to postfix for too
+    # long, after which clients will start getting "450 Server configuration
+    # problem" errors... do it only during the night and only if at least one
+    # day has passed
+    my $hour = (localtime($now))[2];
+    if($hour > 1 and $hour < 7 and
+        $now - $self->{postgrey}{last_maint_keys} >= 82800)
+    {
+        $self->log(2, "cleaning up old entries...");
+        for my $key (keys %$db) {
+            my $last = (split(/,/,$db->{$key}))[1];
+            if($now - $last > $self->{postgrey}{max_age}) {
+                delete $db->{$key};
+            }
         }
+        $self->log(2, "cleaning finished");
+        $self->{postgrey}{last_maint_keys}=$now;
     }
 }
 
@@ -85,7 +97,7 @@ sub smtpd_access_policy($$)
     $db->{$key}="$first,$now";
 
     # do maintenance if one hour has passed since the last one
-    if($now-$self->{postgrey}{last_maint} > 3600) {
+    if($now-$self->{postgrey}{last_maint} >= 3600) {
         $self->{postgrey}{last_maint} = $now;
         $self->do_maintenance($now);
     }
@@ -140,10 +152,11 @@ sub main()
             syslog_ident    => 'postgrey',
         },
         postgrey => {
-            delay          => $opt{delay}     || 300,
-            dbdir          => $opt{dbdir}     || '/var/spool/postfix/postgrey',
-            max_age        => $opt{'max-age'} || 14,
-            last_maint     => time(),
+            delay           => $opt{delay}     || 300,
+            dbdir           => $opt{dbdir}     || '/var/spool/postfix/postgrey',
+            max_age         => $opt{'max-age'} || 14,
+            last_maint      => time(),
+            last_maint_keys => time(),
         },
     }, 'postgrey';
 

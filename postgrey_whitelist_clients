@@ -1,34 +1,39 @@
+# postgrey whitelist for mail client hostnames
+# --------------------------------------------
+# put this file in /etc/postfix or specify its path
+# with --whitelist-clients=xxx
+
 # greylisting.org: Southwest Airlines (unique sender, no retry)
-southwest.com			OK
+southwest.com
 # greylisting.org: AOL (common pool)
-mx.aol.com			OK
+mx.aol.com
 # greylisting.org: Yahoo Groups servers (common pool, no retry)
-scd.yahoo.com			OK
+scd.yahoo.com
 # greylisting.org: isp.belgacom.be (wierd retry pattern)
-isp.belgacom.be			OK
+isp.belgacom.be
 # greylisting.org: Ameritrade (no retry)
-ameritradeinfo.com		OK
+ameritradeinfo.com
 # greylisting.org: Amazon.com (unique sender with letters)
-amazon.com			OK
+amazon.com
 # 2004-05-20: Linux kernel mailing-list (unique sender with letters)
-vger.kernel.org			OK
+vger.kernel.org
 # 2004-06-02: karger.ch, no retry
-karger.ch			OK
+karger.ch
 # 2004-06-02: lilys.ch, (slow: 4 hours)
-server-x001.hostpoint.ch	OK
+server-x001.hostpoint.ch
 # 2004-06-09: roche.com (no retry)
-gw.bas.roche.com		OK
+gw.bas.roche.com
 # 2004-06-09: newsletter (no retry)
-mail.hhlaw.com			OK
+mail.hhlaw.com
 # 2004-06-09: no retry
-prd051.appliedbiosystems.com	OK
+prd051.appliedbiosystems.com
 # 2004-06-17: swissre.com (no retry)
-swissre.com			OK
+swissre.com
 # 2004-06-17: dowjones.com newsletter (unique sender with letters)
-returns.dowjones.com		OK
+returns.dowjones.com
 # 2004-06-18: switch.ch (works but personnel is confused by the error)
-domin.switch.ch			OK
+domin.switch.ch
 # 2004-06-18: schlund.de (common pool)
-moutng.kundenserver.de		OK
+moutng.kundenserver.de
 # 2004-06-23: accor-hotels.com (slow: 6 hours)
-accor-hotels.com		OK
+accor-hotels.com

@@ -165,12 +165,16 @@ sub do_maintenance($$)
         while (my ($key, $value) = each %$db) {
             $nr_keys_before++;
             my ($first, $last) = split(/,/,$value);
-            # last-seen passed max-age
-            if($now - $last > $max_age) {
+            if(not defined $last) {
+                # shouldn't happen
                 delete $db->{$key};
             }
-            # no successful entry yet and last seen passed retry-window
+            elsif($now - $last > $max_age) {
+                # last-seen passed max-age
+                delete $db->{$key};
+            }
             elsif($last - $first < $self->{postgrey}{delay} and $now - $last > $retry_window) {
+                # no successful entry yet and last seen passed retry-window
                 delete $db->{$key};
             }
             else {

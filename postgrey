@@ -204,7 +204,7 @@ sub smtpd_access_policy($$)
 
     # transition code (host lookup -> network lookup): if we find a value with
     # the original unsubstituted host IP, combine both
-    {
+    if($client_net ne $attr->{client_address}) {
         my $key_host = lc "$attr->{client_address}/$sender/$attr->{recipient}";
         my $val_host =  $db->{$key_host};
         if(defined $val_host) {

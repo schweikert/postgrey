@@ -427,8 +427,6 @@ sub main()
         },
     }, 'postgrey';
 
-    die "awl_clients = $server->{postgrey}{awl_clients}\n";
-
     # max_age is in days
     $server->{postgrey}{max_age}*=3600*24;
 

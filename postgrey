@@ -32,7 +32,7 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             if(/^\S+$/) {
-                push @whitelist_clients, qr{\Q$_\E};
+                push @whitelist_clients, qr{\Q$_\E$};
             }
             else {
                 warn "WARNING: $self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname\n";
@@ -52,11 +52,22 @@ sub read_whitelists($)
             s/^\s+//; s/\s+$//;
             next if $_ eq '';
             next if /^#/;
-            if(/^\S+$/ and /\@/) {
-                push @whitelist_recipients, qr{\Q$_\E};
+            my ($user, $domain) = split(/\@/, $_, 2);
+            if(!/^\S+$/) {
+                warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";
+            }
+            # postfix access(5) syntax:
+            elsif(defined $domain and $domain ne '') {
+                # user@domain (match also user+extension@domain)
+                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@\Q$domain\E$};
+            }
+            elsif(defined $domain) {
+                # user@
+                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@};
             }
             else {
-                warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";
+                # domain ($user is the domain)
+                push @whitelist_recipients, qr{\Q$user\E$};
             }
         }
     }

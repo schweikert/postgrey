@@ -1,3 +1,7 @@
+* 2004-06-24
+
+  - postfix-style syntax for whitelists
+
 * 2004-06-24: version 1.7
 
   - bugfix: wrong syslog call ('warn' instead of 'warning')

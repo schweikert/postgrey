@@ -593,7 +593,7 @@ B<postgrey> [I<options>...]
                          append 'h' if you want to specify it in hours
      --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)
      --greylist-text=TXT response when a mail is greylisted
-                         (default: Greylisted for %s seconds + help url, see blow)
+                         (default: Greylisted for %s seconds + help url, see below)
      --lookup-by-subnet  strip the last 8 bits from IP addresses (default)
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients

@@ -57,14 +57,20 @@ sub do_maintenance($$)
     {
         $self->log(2, "cleaning up old entries...");
         my $max_age = $self->{postgrey}{max_age};
+        my ($nr_keys_before, $nr_keys_after) = (0,0);
         while (my ($key, $value) = each %$db) {
+            $nr_keys_before++;
             my $last = (split(/,/,$value))[1];
-            delete $db->{$key} if $now - $last > $max_age;
+            if($now - $last > $max_age) {
+                delete $db->{$key};
+            }
+            else {
+                $nr_keys_after++;
+            }
         }
         $self->{postgrey}{last_maint_keys}=$now;
+        $self->log(2, "cleaning finished. before: $nr_keys_before, after: $nr_keys_after");
     }
-
-    $self->log(2, "cleaning finished");
 }
 
 # main routine: based on attributes specified as argument, return policy decision

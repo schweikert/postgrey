@@ -1,6 +1,8 @@
 * 2004-06-08: version 1.6
 
   - rewritten verp substitution code
+  - when doing keys maintenance: report about how many keys there where before
+    and after.
 
 * 2004-06-03: version 1.5
 

@@ -1,6 +1,7 @@
-* 2004-06-11
+* 2004-06-17
 
   - bugfix: wrong syslog call ('warn' instead of 'warning')
+  - update whitelist
 
 * 2004-06-11: version 1.6
 

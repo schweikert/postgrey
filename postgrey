@@ -73,11 +73,10 @@ sub do_maintenance($$)
         $now - $self->{postgrey}{last_maint_keys} >= 82800)
     {
         $self->log(2, "cleaning up old entries...");
-        for my $key (keys %$db) {
-            my $last = (split(/,/,$db->{$key}))[1];
-            if($now - $last > $self->{postgrey}{max_age}) {
-                delete $db->{$key};
-            }
+        my $max_age = $self->{postgrey}{max_age};
+        while (my ($key, $value) = each %$db) {
+            my $last = (split(/,/,$value))[1];
+            delete $db->{$key} if $now - $last > $max_age;
         }
         $self->{postgrey}{last_maint_keys}=$now;
     }

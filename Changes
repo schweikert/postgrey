@@ -7,6 +7,7 @@
     be accepted
   - traverse the database for cleaning old entries only during the night
     and only once per day
+  - more efficient traversal of database for cleaning (Matthew Reimer)
   - fix syslogging of warnings and fatal errors
 
 * 2004-05-24: version 1.4

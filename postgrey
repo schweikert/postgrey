@@ -329,6 +329,8 @@ sub smtpd_access_policy($$)
     if ($diff > 0 ) {
         my $msg = $self->{postgrey}{greylist_text};
         $msg =~ s/\%s/$diff/;
+        my $recip_domain = $attr->{recipient}; $recip_domain =~ s/.*\@//;
+        $msg =~ s/\%r/$recip_domain/;
         return "$self->{postgrey}{greylist_action} $msg";
     }
 
@@ -432,7 +434,7 @@ sub main()
                     $opt{'auto-whitelist-clients'} : 5) : 5,
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
-            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help)',
+            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help/%r.html)',
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],
@@ -487,13 +489,23 @@ sub pre_loop_hook()
         $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', "fatal: $_[0]"); die @_; };
     }
 
+    # compatibility with Berkeley-DB versions < 4.1, which don't have
+    # DB_AUTO_COMMIT:
+    my $setflags = DB_TXN_NOSYNC;
+    if(defined $BerkeleyDB::{DB_AUTO_COMMIT}) {
+	$setflags |= eval "BerkeleyDB::DB_AUTO_COMMIT";
+    }
+    else {
+        warn "WARNING: disabling DB_AUTO_COMMIT because you are using BerkeleyDB version $BerkeleyDB::db_version. Version 4.1 is required for DB_AUTO_COMMIT. You might have problems in case of system failures to recover the database.\n";
+    }
+
     # open database with transactions, logging and auto-commit to make it as
     # safe as possible. Note that locking is not required since only one
     # process is running
     $self->{postgrey}{db_env} = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
         -Flags    => DB_CREATE|DB_RECOVER|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
-        -SetFlags => DB_AUTO_COMMIT|DB_TXN_NOSYNC,
+        -SetFlags => $setflags,
     ) or die "ERROR: can't create DB environment: $!\n";
 
     tie(%{$self->{postgrey}{db}}, 'BerkeleyDB::Btree',
@@ -581,7 +593,7 @@ B<postgrey> [I<options>...]
                          append 'h' if you want to specify it in hours
      --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)
      --greylist-text=TXT response when a mail is greylisted
-                         (default: Greylisted for %s seconds)
+                         (default: Greylisted for %s seconds + help url, see blow)
      --lookup-by-subnet  strip the last 8 bits from IP addresses (default)
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
@@ -735,6 +747,36 @@ always defer the message with an SMTP reply code of 451 (temp fail).
 See the postfix manual page access(5) for a discussion of the actions
 allowed.
 
+=head2 Greylist Text
+
+When a message is greylisted, an error message like this will be sent at the
+SMTP-level:
+
+ Greylisted for 300 seconds (see http://isg.ee.ethz.ch/tools/postgrey/help/example.com.html)
+
+Usually no user should see that error message and the idea of that URL is to
+provide some help to system administrators seeing that message or users of
+broken mail clients which try to send mails directly and get a greylisting
+error. Note that the default help-URL contains the original recipient domain
+(example.com), so that it is possible to see where those requests come from.
+
+You can change the text (and URL) with the B<--greylist-text> parameter. The following
+special variables will be replaced in the text:
+
+=over 4
+
+=item %s
+
+How many seconds left until the greylisting is over (300).
+
+=item %r
+
+Mail-domain of the recipient (example.com).
+
+=back
+
+=back
+
 =head2 SEE ALSO
 
 See L<http://www.greylisting.org/> for a description of what
@@ -743,7 +785,7 @@ for a description of how Postfix policy servers work.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004 by ETH Zurich. All rights reserved.
+Copyright (c) 2004-2005 by ETH Zurich. All rights reserved.
 
 =head1 LICENSE
 

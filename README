@@ -21,3 +21,16 @@ See POD documentation in postgrey. Execute:
 
   perldoc postgrey
 
+
+Mailing-List and getting Help
+-----------------------------
+
+There is a mailing-list for the discussion of postgrey, where you can
+also ask for help in case of trouble. To subscribe, send a mail with
+subject 'subscribe' to:
+
+  postgrey-request@list.ee.ethz.ch 
+  
+There is also a mailing-list archive, where you might find answers:
+
+  http://www.ee.ethz.ch/~slist/postgrey/

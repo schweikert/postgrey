@@ -49,7 +49,7 @@ sub main
 {
 	GetOptions(\%opt, 
 		'help|h', 'version', 'man',
-		'delay=s', 'user|u', 'dbdir=s', 
+		'delay=s', 'user|u=s', 'dbdir=s', 
 		'debug_db', 'debug_re=s', 'v+',
 		'return_string|greylist-text=s',
 		'show_tries', 

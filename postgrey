@@ -18,7 +18,7 @@ use Fcntl ':flock'; # import LOCK_* constants
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.13";
+my $VERSION = "1.14rc1";
 
 sub read_clients_whitelists($)
 {
@@ -126,7 +126,7 @@ sub do_client_substitutions($$$)
     return ($ip, undef) unless defined $ip[3];
     # skip if it contains the last two IP numbers in the hostname
     # (we assume it is a pool of dialup addresses of a provider)
-    return ($ip, undef) if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
+    return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
     return (join('.', @ip[0..2], '0'), $ip[3]);
 }
 

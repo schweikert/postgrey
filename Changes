@@ -1,16 +1,16 @@
-* 2004-07-11: version 1.15
+* 2004-07-11: version 1.14rc1
 
   - lookup-by-subnet is default. "transition code" has been implemented, so that
     also a lookup with the unstripped IP will be tried. That way you shouldn't
-    loose any data from the database when moving to version 1.15. Use
+    loose any data from the database when moving to version 1.14. Use
     --lookup-by-host for the old behaviour. All "address pool" entries are
     remove from the whitelist...
-
-* 2004-07-05: version 1.14
-
+  - loosen "IP in reverse name" test (Matt Egan)
   - changed default --max-age to 30, since the db should shrink a lot
-    because of the --retry-window functionality.
+    because of the --retry-window functionality (you might want to
+    db_dump/db_load your db to make it really shrink on disk)
   - another Perl 5.8.0 workaround
+  - update whitelist
 
 * 2004-07-05: version 1.13
 

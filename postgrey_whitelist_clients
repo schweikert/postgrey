@@ -5,9 +5,7 @@
 
 # greylisting.org: Southwest Airlines (unique sender, no retry)
 southwest.com
-# greylisting.org: AOL (common pool)
-mx.aol.com
-# greylisting.org: Yahoo Groups servers (common pool, no retry)
+# greylisting.org: Yahoo Groups servers (no retry)
 scd.yahoo.com
 # greylisting.org: isp.belgacom.be (wierd retry pattern)
 isp.belgacom.be
@@ -33,8 +31,6 @@ swissre.com
 returns.dowjones.com
 # 2004-06-18: switch.ch (works but personnel is confused by the error)
 domin.switch.ch
-# 2004-06-18: schlund.de (common pool, reported by Klaus Steinberger)
-moutng.kundenserver.de
 # 2004-06-23: accor-hotels.com (slow: 6 hours)
 accor-hotels.com
 # 2004-06-29: rr.com (no retry, reported by Duncan Hill)
@@ -57,5 +53,7 @@ cs.columbia.edu
 /^smtp\d+\.tiscali\.dk$/
 # 2004-07-04: freshmeat.net (address verification)
 freshmeat.net
-# 2004-07-05: gmail.com (common pool, reported by Eric)
-rproxy.gmail.com
+# 2004-07-11: zd-swx.com (unique sender with letters, reported by Bill Landry)
+zd-swx.com
+# 2004-07-11: lockergnome.wc09.net (unique sender with letters, reported by Bill Landry)
+lockergnome.wc09.net

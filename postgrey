@@ -35,12 +35,12 @@ sub read_whitelists($)
                 push @whitelist_clients, qr{\Q$_\E};
             }
             else {
-                warn "$self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname";
+                warn "WARNING: $self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname\n";
             }
         }
     }
     else {
-        warn "can't open whitelist-clients: $self->{postgrey}{whitelist_clients_file}";
+        warn "WARNING: can't open whitelist-clients: $self->{postgrey}{whitelist_clients_file}\n";
     }
     close(CLIENTS);
     $self->{postgrey}{whitelist_clients} = \@whitelist_clients;
@@ -56,12 +56,12 @@ sub read_whitelists($)
                 push @whitelist_recipients, qr{\Q$_\E};
             }
             else {
-                warn "$self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address";
+                warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";
             }
         }
     }
     else {
-        warn "can't open whitelist-recipients: $self->{postgrey}{whitelist_recipients_file}";
+        warn "WARNING: can't open whitelist-recipients: $self->{postgrey}{whitelist_recipients_file}\n";
     }
     close(RECIPIENTS);
     $self->{postgrey}{whitelist_recipients} = \@whitelist_recipients;

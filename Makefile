@@ -1,4 +1,6 @@
-VERSION = 1.11rc1
+MAJOR = 1
+MINOR = 11rc1
+VERSION = $(MAJOR).$(MINOR)
 PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 
 version:
@@ -18,8 +20,9 @@ pub/postgrey-$(VERSION).tar.gz: version
 	gtar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)
 
-publish: pub/postgrey-$(VERSION).tar.gz
+publish: pub/postgrey-$(VERSION).tar.gz tag
+	cvs tag v$(MAJOR)_$(MINOR)
 	mv $(PUB)/*.tar.gz $(PUB)/old
 	cp Changes pub/postgrey-$(VERSION).tar.gz $(PUB)
 
-.PHONY: version publish
+.PHONY: version publish tarball

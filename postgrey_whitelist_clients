@@ -41,3 +41,5 @@ accor-hotels.com
 /^ms-smtp.*\.rr\.com$/
 # 2004-06-29: cox.net (no retry, reported by Duncan Hill)
 /^lake.*mta.*\.cox\.net$/
+# 2004-05-29: motorola.com (no retry)
+mot.com

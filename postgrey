@@ -332,6 +332,9 @@ sub smtpd_access_policy($$)
     }
     else {
         if($self->is_new_instance($attr->{instance})) {
+            # syslog
+            $self->log(2, "$attr->{queue_id}: delayed ".($now-$first)." seconds");
+
             # add X-Greylist header
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);
             return 'PREPEND X-Greylist: delayed '.($now-$first).

@@ -10,6 +10,10 @@
     because of the --retry-window functionality (you might want to
     db_dump/db_load your db to make it really shrink on disk)
   - another Perl 5.8.0 workaround
+  - implemented --greylist-text (Tom Baker)
+  - replaced X-Postgrey header with a X-Greylist header which is more similar
+    to what greylist-milter does (Stephen Gildea)
+  - implemented --greylist-action (Stephen Gildea)
   - update whitelist
 
 * 2004-07-05: version 1.13

@@ -14,11 +14,14 @@ use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Multiplex;
 use BerkeleyDB;
 use Fcntl ':flock'; # import LOCK_* constants
+use Sys::Hostname;
+use POSIX qw(strftime);
 
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.14rc1";
+my $VERSION = "1.14rc2";
+my $hostname = hostname;
 
 sub read_clients_whitelists($)
 {
@@ -259,7 +262,9 @@ sub smtpd_access_policy($$)
     $self->log(4, "request age ".($now - $first));
     my $diff = $self->{postgrey}{delay} - ($now - $first);
     if ($diff > 0 ) {
-        return "DEFER_IF_PERMIT Greylisted for $diff seconds...";
+        my $msg = $self->{postgrey}{greylist_text};
+        $msg =~ s/\%s/$diff/;
+        return $self->{postgrey}{greylist_action},' ',$msg;
     }
     elsif($last_was_successful) {
         # we don't add an header, because probably this message wasn't delayed
@@ -267,7 +272,9 @@ sub smtpd_access_policy($$)
         return 'DUNNO';
     }
     else {
-        return 'PREPEND X-Postgrey: delayed '.($now-$first).' seconds';
+        my $date = strftime("%a, %d %b %Y %T %Z");
+        return 'PREPEND X-Greylist: delayed '.($now-$first).
+            " seconds by Postgrey $VERSION at $hostname; $date";
     }
 }
 
@@ -282,7 +289,7 @@ sub main()
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
         'lookup-by-subnet', 'lookup-by-host', 'whitelist-clients=s@', 'whitelist-recipients=s@',
-        'retry-window=s',
+        'retry-window=s', 'greylist-action=s', 'greylist-text=s',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
@@ -339,6 +346,8 @@ sub main()
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
             retry_window     => $retry_window,
+            greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
+            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %d seconds',
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],
@@ -460,23 +469,26 @@ postgrey - Postfix Greylisting Policy Server
 
 B<postgrey> [I<options>...]
 
- -h, --help             display this help and exit
-     --version          output version information and exit
- -v, --verbose          increase verbosity level
+ -h, --help              display this help and exit
+     --version           output version information and exit
+ -v, --verbose           increase verbosity level
 
- -u, --unix=PATH        listen on unix socket PATH
- -i, --inet=[HOST:]PORT listen on PORT, localhost if HOST is not specified
- -d, --daemonize        run in the background
-     --pidfile=PATH     put daemon pid into this file
-     --user=USER        run as USER (default: postgrey)
-     --dbdir=PATH       put db files in PATH (default: /var/spool/postfix/postgrey)
-     --delay=N          greylist for N seconds (default: 300)
-     --max-age=N        delete entries older than N days since the last time
-                        that they have been seen (default: 30)
-     --retry-window=N   allow only N days for the first retrial (default: 2)
-                        append 'h' if you want to specify it in hours
-     --lookup-by-subnet strip the last 8 bits from IP addresses
-     --lookup-by-host   do not strip the last 8 bits from IP addresses
+ -u, --unix=PATH         listen on unix socket PATH
+ -i, --inet=[HOST:]PORT  listen on PORT, localhost if HOST is not specified
+ -d, --daemonize         run in the background
+     --pidfile=PATH      put daemon pid into this file
+     --user=USER         run as USER (default: postgrey)
+     --dbdir=PATH        put db files in PATH (default: /var/spool/postfix/postgrey)
+     --delay=N           greylist for N seconds (default: 300)
+     --max-age=N         delete entries older than N days since the last time
+                         that they have been seen (default: 30)
+     --retry-window=N    allow only N days for the first retrial (default: 2)
+                         append 'h' if you want to specify it in hours
+     --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)
+     --greylist-text=TXT response when a mail is greylisted
+                         (default: Greylisted for %d seconds)
+     --lookup-by-subnet  strip the last 8 bits from IP addresses (default)
+     --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
 
@@ -582,8 +594,8 @@ C<domain.addr> domain and subdomains.
 
 =item IP1.IP2.IP3.IP4
 
-IP address IP1.IP2.IP3.IP4. You can also leave off one number, in which case
-only the first specified numbers will be checked.
+IP address IP1.IP2.IP3.IP4. You can also leave off one number, in
+which case only the first specified numbers will be checked.
 
 =item /regexp/
 
@@ -591,11 +603,25 @@ anything that matches C<regexp> (the full address is matched).
 
 =back
 
+=head2 Greylist Action
+
+To set the action to be returned to postfix when a message fails
+postgrey's tests and should be deferred, use the
+--greylist-action=ACTION option.
+
+By default, postgrey returns DEFER_IF_PERMIT, which causes postfix to
+check the rest of the restrictions and defer the message only if it
+would otherwise be accepted.  A delay action of 451 causes postfix to
+always defer the message with an SMTP reply code of 451 (temp fail).
+
+See the postfix manual page access(5) for a discussion of the actions
+allowed.
+
 =head2 SEE ALSO
 
-See L<http://www.greylisting.org/> for a description of what greylisting is
-and L<http://www.postfix.org/SMTPD_POLICY_README.html> for a description of how
-Postfix policy servers work.
+See L<http://www.greylisting.org/> for a description of what
+greylisting is and L<http://www.postfix.org/SMTPD_POLICY_README.html>
+for a description of how Postfix policy servers work.
 
 =head1 COPYRIGHT
 

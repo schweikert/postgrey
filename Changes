@@ -1,4 +1,4 @@
-* 2005-03-05: version 1.18-rc1
+* 2005-03-07: version 1.18
 
    - correctly set the locale to C so that no internationalized 8bit-text
      is put in the headers (Bernhard Weisshuhn)
@@ -6,7 +6,8 @@
    - bugfix: sometimes the retry-window was not properly enforced
    - bugfix: argument parsing in postgreyreport (MJH)
    - include the recipient-domain in the default --greylist-text so
-     that the concerned mail-server can be determined
+     that the concerned mail-server can be determined and a contact-address
+     can be given on the help page
    - better documentation for --greylist-text
    - just warn if DB_AUTO_COMMIT is not available because an older berkeley-db
      is used (Adrian 'Dagurashibanipal' von Bidder)

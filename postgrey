@@ -758,10 +758,11 @@ Usually no user should see that error message and the idea of that URL is to
 provide some help to system administrators seeing that message or users of
 broken mail clients which try to send mails directly and get a greylisting
 error. Note that the default help-URL contains the original recipient domain
-(example.com), so that it is possible to see where those requests come from.
+(example.com), so that domain-specific help can be presented to the user (on
+the default page it is said to contact postmaster@example.com)
 
-You can change the text (and URL) with the B<--greylist-text> parameter. The following
-special variables will be replaced in the text:
+You can change the text (and URL) with the B<--greylist-text> parameter. The
+following special variables will be replaced in the text:
 
 =over 4
 

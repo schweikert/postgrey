@@ -20,7 +20,7 @@ pub/postgrey-$(VERSION).tar.gz: version
 	gtar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)
 
-publish: pub/postgrey-$(VERSION).tar.gz tag
+publish: pub/postgrey-$(VERSION).tar.gz
 	cvs tag v$(MAJOR)_$(MINOR)
 	mv $(PUB)/*.tar.gz $(PUB)/old
 	cp Changes pub/postgrey-$(VERSION).tar.gz $(PUB)

@@ -18,7 +18,7 @@ use BerkeleyDB;
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-'$Revision: 2 $ ' =~ /Revision: (\S*)/;
+'$Revision: 3 $ ' =~ /Revision: (\S*)/;
 my $Revision = $1;
 
 # LOCAL CHANGES HERE: {{{
@@ -141,7 +141,11 @@ sub main()
             log_facilty    => 'mail',
             log_file       => $opt{daemonize} ? 'Sys::Syslog' : undef,
             syslog_logsock => 'inet',
-        }
+        },
+        postgrey => {
+            delay          => $opt{delay} || 600,
+            dbdir          => $opt{dbdir} || '/var/spool/postfix/postgrey',
+        },
     }, 'postgrey';
 
     $server->run;
@@ -149,15 +153,15 @@ sub main()
 
 ##### Net::Server::Multiplex methods:
 
-sub post_configure_hook()
+sub pre_loop_hook()
 {
     my ($self) = @_;
 
-    # open database with transactions and auto-commit to make it as safe as
-    # possible. locking isn't needed since we are the only ones touching it
+    # open database with transactions, locking and auto-commit to make it as
+    # safe as possible.
     my $env = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
-        -Flags    => DB_CREATE|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
+        -Flags    => DB_CREATE|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG|DB_INIT_LOCK,
         -SetFlags => DB_AUTO_COMMIT,
     ) or die "ERROR: can't create DB environment: $!\n";
 

@@ -18,8 +18,7 @@ use BerkeleyDB;
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-'$Revision: 6 $ ' =~ /Revision: (\S*)/;
-my $Revision = $1;
+my $VERSION = '0.1';
 
 # local policy about what users want greylisting:
 sub policing_is_wanted($)
@@ -134,7 +133,7 @@ sub main()
         'delay=i', 'max-age=i') or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
-    if($opt{version})  { print "template_tool $Revision\n"; exit(0) }
+    if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
     if($opt{noaction}) { die "ERROR: don't know how to \"no-action\".\n" }
 
     defined $opt{unix} or defined $opt{inet} or

@@ -23,6 +23,10 @@ mail.hhlaw.com			OK
 # 2004-06-09: no retry
 prd051.appliedbiosystems.com	OK
 # 2004-06-17: swissre.com (no retry)
-chr7ca78.swissre.com		OK
-# 2004-06-17: dowjones.com newsletter (no retry)
+swissre.com			OK
+# 2004-06-17: dowjones.com newsletter (unique sender with letters)
 returns.dowjones.com		OK
+# 2004-06-18: switch.ch (works but personnel is confused by the error)
+domin.switch.ch			OK
+# 2004-06-18: schlund.de (common pool)
+moutng.kundenserver.de		OK

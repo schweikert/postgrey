@@ -62,3 +62,5 @@ p01m168.mxlogic.net
 p02m169.mxlogic.net
 # 2004-09-08: intel.com (pool on different subnets) 
 /^fmr\d+\.intel\.com$/
+# 2004-09-17: cox-internet.com (no retry, reported by Rod Roark)
+/^fe\d+\.cox-internet\.com$/

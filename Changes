@@ -4,7 +4,7 @@
     also a lookup with the unstripped IP will be tried. That way you shouldn't
     loose any data from the database when moving to version 1.14. Use
     --lookup-by-host for the old behaviour. All "address pool" entries are
-    remove from the whitelist...
+    removed from the whitelist...
   - loosen "IP in reverse name" test (Matt Egan)
   - changed default --max-age to 30, since the db should shrink a lot
     because of the --retry-window functionality (you might want to

@@ -23,11 +23,11 @@ my $VERSION = '1.0';
 sub do_verp_substitutions($)
 {
     my ($addr) = @_;
-    my ($user, $host) = split(/@/, $addr, 2);
-    defined $host or return $addr;
+    my ($user, $domain) = split(/@/, $addr, 2);
+    defined $domain or return $addr;
     # replace numbers with #
     $user =~ s/\b\d+\b/#/g;
-    return "$user\@$host";
+    return "$user\@$domain";
 }
 
 sub do_maintenance($$)

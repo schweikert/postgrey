@@ -3,6 +3,7 @@
   - rewritten verp substitution code
   - when doing keys maintenance: report about how many keys there where before
     and after.
+  - update whitelist
 
 * 2004-06-03: version 1.5
 

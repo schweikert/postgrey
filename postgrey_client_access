@@ -1,24 +1,24 @@
-# based on: http://www.greylisting.org/whitelisting.html
-
-# Linux kernel (unique sender)
-vger.kernel.org		OK
-# Southwest Airlines (unique sender, no retry)
-southwest.com		OK
-# AOL (common pool)
-mx.aol.com		OK
-# collab.net (unique sender per attempt)
-collab.net		OK
-# Yahoo Groups servers (common pool, no retry)
-scd.yahoo.com		OK
-# isp.belgacom.be (wierd retry pattern)
-isp.belgacom.be		OK
-# Ameritrade (no retry)
-ameritradeinfo.com	OK
-# SecurityFocus.com (unique sender per attempt)
-securityfocus.com	OK
-# Prodigy - broken software that retries continually (no delay)
-prodigy.com		OK
-# Amazon.com
-amazon.com		OK
-# Mysql.com (unique sender)
-mysql.com		OK
+# greylisting.org: Southwest Airlines (unique sender, no retry)
+southwest.com			OK
+# greylisting.org: AOL (common pool)
+mx.aol.com			OK
+# greylisting.org: Yahoo Groups servers (common pool, no retry)
+scd.yahoo.com			OK
+# greylisting.org: isp.belgacom.be (wierd retry pattern)
+isp.belgacom.be			OK
+# greylisting.org: Ameritrade (no retry)
+ameritradeinfo.com		OK
+# greylisting.org: Amazon.com (unique sender with letters)
+amazon.com			OK
+# 2004-05-20: Linux kernel mailing-list (unique sender with letters)
+vger.kernel.org			OK
+# 2004-06-02: karger.ch, no retry
+karger.ch			OK
+# 2004-06-02: lilys.ch, (very slow: 4 hours)
+server-x001.hostpoint.ch	OK
+# 2004-06-09: roche.com (no retry)
+gw.bas.roche.com		OK
+# 2004-06-09: newsletter (no retry)
+mail.hhlaw.com			OK
+# 2004-06-09: no retry
+prd051.appliedbiosystems.com	OK

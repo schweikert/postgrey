@@ -1,6 +1,8 @@
-* 2004-12-11: version 1.17
+* 2004-12-13: version 1.17
 
    - added --auto-whitelist-clients option (Andreas Hoedle)
+     it is turned on by default, to disable it specify
+     --auto-whitelist-clients=0
    - removed "transition code" of version 1.14
    - command-line as process name instead of just 'perl' (Pierre Thierry)
    - add option --group or set group to 'nogroup' (Adrian 'Dagurashibanipal'

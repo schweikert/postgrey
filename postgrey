@@ -293,7 +293,7 @@ sub smtpd_access_policy($$)
         if($self->is_new_instance($attr->{instance})) {
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);
             return 'PREPEND X-Greylist: delayed '.($now-$first).
-                " seconds by postgrey-$VERSION at $hostname;\n\t$date";
+                " seconds by postgrey-$VERSION at $hostname; $date";
         }
     }
 }

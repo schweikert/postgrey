@@ -1,5 +1,5 @@
 MAJOR = 1
-MINOR = 17rc1
+MINOR = 17rc2
 VERSION = $(MAJOR).$(MINOR)
 PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 

@@ -175,7 +175,7 @@ sub do_maintenance($$)
                 $nr_keys_after++;
             }
         }
-        $self->log(2, "cleaning host/sender/recipient database finished. before: $nr_keys_before, after: $nr_keys_after");
+        $self->log(2, "cleaning main database finished. before: $nr_keys_before, after: $nr_keys_after");
 
         if($self->{postgrey}{awl_clients}) {
             # cleanup clients auto-whitelist database
@@ -333,7 +333,8 @@ sub smtpd_access_policy($$)
     else {
         if($self->is_new_instance($attr->{instance})) {
             # syslog
-            $self->log(2, "$attr->{queue_id}: delayed ".($now-$first)." seconds (to=$attr->{recipient})");
+            my $client = $attr->{client_name} eq 'unknown' ? $attr->{client_address} : $attr->{client_name};
+            $self->log(2, "delayed ".($now-$first)." seconds: client=$client, from=$attr->{sender}, to=$attr->{recipient}");
 
             # add X-Greylist header
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);

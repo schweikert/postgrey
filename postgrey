@@ -56,7 +56,8 @@ sub do_maintenance($$)
     # remove old db logs
 
     $self->log(2, "cleaning up old logs...");
-    $db_env->txn_checkpoint(0, 0) or warn "can't checkpoint !?";
+    $db_env->txn_checkpoint(0, 0) and
+        warn "can't checkpoint !? $BerkeleyDB::Error";
     for my $l ($db_env->log_archive(DB_ARCH_ABS)) {
         $self->log(2, "rm $l");
         unlink $l or warn "can't remove db log $l: $!\n";

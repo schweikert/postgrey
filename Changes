@@ -1,4 +1,4 @@
-* 2004-06-01: version 1.5
+* 2004-06-03: version 1.5
 
   - default delay is now 300 seconds instead of 600 (received reports of
     mailers that try again the first time after 8 minutes and it doesn't seem
@@ -7,6 +7,7 @@
     be accepted
   - traverse the database for cleaning old entries only during the night
     and only once per day
+  - fix syslogging of warnings and fatal errors
 
 * 2004-05-24: version 1.4
 

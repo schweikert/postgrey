@@ -20,7 +20,7 @@ use POSIX qw(strftime);
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.17rc2";
+my $VERSION = "1.17rc3";
 my $hostname = hostname;
 
 sub read_clients_whitelists($)
@@ -396,7 +396,7 @@ sub main()
             port             => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto            => $opt{inet} ? 'tcp' : 'unix',
             user             => $opt{user} || 'postgrey',
-            group            => $opt{group} || 'nobody',
+            group            => $opt{group} || 'nogroup',
             dbdir            => $opt{dbdir} || '/var/spool/postfix/postgrey',
             setsid           => $opt{daemonize} ? 1 : undef,
             pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
@@ -558,7 +558,7 @@ B<postgrey> [I<options>...]
  -d, --daemonize         run in the background
      --pidfile=PATH      put daemon pid into this file
      --user=USER         run as USER (default: postgrey)
-     --group=GROUP       run as group GROUP (default: nobody)
+     --group=GROUP       run as group GROUP (default: nogroup)
      --dbdir=PATH        put db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N           greylist for N seconds (default: 300)
      --max-age=N         delete entries older than N days since the last time

@@ -288,13 +288,30 @@ sub smtpd_access_policy($$)
         my $cawl_db  = $self->{postgrey}{db_cawl};
         my $cawl_key = $attr->{client_address};
         my $cawl_val = $cawl_db->{$cawl_key};
-        my $cawl_count = defined $cawl_val ? (split(/,/,$cawl_val))[0] : 0;
+        my ($cawl_count, $cawl_last);
+        ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
         
         # whitelist if count is enough
-        if($cawl_count >= $self->{postgrey}{awl_clients}) {
-            $cawl_count++; # for statistics
-            $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+        if(defined $cawl_count and $cawl_count >= $self->{postgrey}{awl_clients})
+        {
+            if($now >= $cawl_last+3600) {
+                $cawl_count++; # for statistics
+                $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+            }
             return 'DUNNO';
+        }
+
+        # greylisting succeeded
+        if($diff <= 0 and !$last_was_successful) {
+            # enough time has passed (record only one attempt per hour)
+            if(! defined $cawl_last or $now >= $cawl_last + 3600) {
+                # host has a proper DNS record
+                if($attr->{client_name} ne 'unknown') {
+                    # ok, increase count
+                    $cawl_count++;
+                    $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+                }
+            }
         }
     }
 
@@ -313,21 +330,6 @@ sub smtpd_access_policy($$)
     }
     else {
         if($self->is_new_instance($attr->{instance})) {
-            # initial entry in the greylist db:
-
-            # update clients-auto-whitelist
-            if($self->{postgrey}{awl_clients}) {
-                # do it only for hosts that have a proper DNS record
-                if($attr->{client_name} ne 'unknown') {
-                    my $cawl_db  = $self->{postgrey}{db_cawl};
-                    my $cawl_key = $attr->{client_address};
-                    my $cawl_val = $cawl_db->{$cawl_key};
-                    my $cawl_count = defined $cawl_val ? (split(/,/,$cawl_val))[0] : 0;
-                    $cawl_count++;
-                    $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-                }
-            }
-
             # add X-Greylist header
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);
             return 'PREPEND X-Greylist: delayed '.($now-$first).
@@ -349,12 +351,15 @@ sub main()
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'group=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:i', 
+        'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
+    # note: auto-whitelist-clients:s and not auto-whitelist-clients:n so that
+    # we can differentiate between --auto-whitelist-clients=0 and
+    # auto-whitelist-clients
 
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
@@ -409,7 +414,8 @@ sub main()
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
             awl_clients      => defined $opt{'auto-whitelist-clients'} ?
-                ($opt{'auto-whitelist-clients'} ? $opt{'auto-whitelist-clients'} : 5) : undef,
+                ($opt{'auto-whitelist-clients'} ne '' ?
+                    $opt{'auto-whitelist-clients'} : 5) : 5,
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
             greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help)',
@@ -420,6 +426,8 @@ sub main()
                 [ '/etc/postfix/postgrey_whitelist_recipients' ],
         },
     }, 'postgrey';
+
+    die "awl_clients = $server->{postgrey}{awl_clients}\n";
 
     # max_age is in days
     $server->{postgrey}{max_age}*=3600*24;
@@ -566,9 +574,10 @@ B<postgrey> [I<options>...]
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
-     --auto-whitelist-clients[=N] whitelist host after first successful delievery
+     --auto-whitelist-clients=N   whitelist host after first successful delievery
                                   N is the minimal count of mails before a client is 
-                                  whitelisted (default: 5)
+                                  whitelisted (turned on by default with value 5)
+                                  specify N=0 to disable.
 
  Note that the --whitelist-x options can be specified multiple times,
  and that per default /etc/postfix/postgrey_whitelist_clients.local is
@@ -692,11 +701,11 @@ automatically whitelisted if the following conditions are met:
 
 At least 5 successfull attempts of delivering a mail (after greylisting was
 done). That number can be changed by specifying a number after the
---auto-whitelist-clients argument.
+--auto-whitelist-clients argument. Only one attempt per hour counts.
 
 =item *
 
-Last seen before --max-age (35 days)
+The client was last seen before --max-age days (35 per default).
 
 =back
 

@@ -202,7 +202,7 @@ sub mux_input()
     my $attr = $self->{postgrey_attr};
 
     # consume entire lines
-    while ($$in_ref =~ s/^([^\n]*)\n//) {
+    while ($$in_ref =~ s/^([^\r\n]*)\r?\n//) {
         next unless defined $1;
         my $in = $1;
         if($in =~ /([^=]+)=(.*)/) {

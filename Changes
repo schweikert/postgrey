@@ -2,6 +2,7 @@
 
   - bugfix: wrong syslog call ('warn' instead of 'warning')
   - update whitelist
+  - allow input with cr-lf lines for testing (Tom Baker)
 
 * 2004-06-11: version 1.6
 

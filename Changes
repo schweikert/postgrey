@@ -1,4 +1,4 @@
-* 2004-12-13: version 1.17
+* 2004-12-14: version 1.17
 
    - added --auto-whitelist-clients option (Andreas Hoedle)
      it is turned on by default, to disable it specify

@@ -331,7 +331,7 @@ sub main()
     my $retry_window = 24*3600*2; # default: 2 days
     if(defined $opt{'retry-window'}) {
         if($opt{'retry-window'} =~ /^(\d+)h$/i) {
-            $retry_window = $opt{'retry-window'} * 3600;
+            $retry_window = $1 * 3600;
         }
         elsif($opt{'retry-window'} =~ /^\d+$/) {
             $retry_window = $opt{'retry-window'} * 24 * 3600;

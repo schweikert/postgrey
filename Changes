@@ -1,6 +1,11 @@
-* 2004-06-24
+* 2004-06-25:
+
+  - case-insensitive whitelists
+
+* 2004-06-24: version 1.8
 
   - postfix-style syntax for whitelists
+  - add .0 on --lookup-by-subnet (Tom Baker)
 
 * 2004-06-24: version 1.7
 

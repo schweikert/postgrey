@@ -32,7 +32,7 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             if(/^\S+$/) {
-                push @whitelist_clients, qr{\Q$_\E$};
+                push @whitelist_clients, qr{\Q$_\E$}i;
             }
             else {
                 warn "WARNING: $self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname\n";
@@ -59,15 +59,15 @@ sub read_whitelists($)
             # postfix access(5) syntax:
             elsif(defined $domain and $domain ne '') {
                 # user@domain (match also user+extension@domain)
-                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@\Q$domain\E$};
+                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@\Q$domain\E$i};
             }
             elsif(defined $domain) {
                 # user@
-                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@};
+                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@}i;
             }
             else {
                 # domain ($user is the domain)
-                push @whitelist_recipients, qr{\Q$user\E$};
+                push @whitelist_recipients, qr{\Q$user\E$}i;
             }
         }
     }
@@ -103,7 +103,7 @@ sub do_client_substitutions($$$)
         # skip if it contains the last two IP numbers in the hostname
         # (we assume it is a pool of dialup addresses of a provider)
         return $ip  if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
-        return join('.', $ip[0..2]);
+        return join('.', $ip[0..2], '0');
     }
     return $ip;
 }

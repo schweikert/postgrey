@@ -315,14 +315,17 @@ sub smtpd_access_policy($$)
         if($self->is_new_instance($attr->{instance})) {
             # initial entry in the greylist db:
 
-            # update client-auto-whitelist
+            # update clients-auto-whitelist
             if($self->{postgrey}{awl_clients}) {
-                my $cawl_db  = $self->{postgrey}{db_cawl};
-                my $cawl_key = $attr->{client_address};
-                my $cawl_val = $cawl_db->{$cawl_key};
-                my $cawl_count = defined $cawl_val ? (split(/,/,$cawl_val))[0] : 0;
-                $cawl_count++;
-                $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+                # do it only for hosts that have a proper DNS record
+                if($attr->{client_name} ne 'unknown') {
+                    my $cawl_db  = $self->{postgrey}{db_cawl};
+                    my $cawl_key = $attr->{client_address};
+                    my $cawl_val = $cawl_db->{$cawl_key};
+                    my $cawl_count = defined $cawl_val ? (split(/,/,$cawl_val))[0] : 0;
+                    $cawl_count++;
+                    $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+                }
             }
 
             # add X-Greylist header

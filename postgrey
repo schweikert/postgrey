@@ -310,7 +310,7 @@ sub smtpd_access_policy($$)
                     # ok, increase count
                     $cawl_count++;
                     $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-                    $self->log(4, "whitelisted: $attr->{client_name}")
+                    $self->log(2, "whitelisted: $attr->{client_name}")
                         if $cawl_count==$self->{postgrey}{awl_clients};
                 }
             }

@@ -32,7 +32,7 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             if(/^\S+$/) {
-                push @whitelist_clients, qr{$_};
+                push @whitelist_clients, qr{\Q$_\E};
             }
             else {
                 warn "$self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname";
@@ -53,7 +53,7 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             if(/^\S+$/ and /\@/) {
-                push @whitelist_recipients, qr{$_};
+                push @whitelist_recipients, qr{\Q$_\E};
             }
             else {
                 warn "$self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address";

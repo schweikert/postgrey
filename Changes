@@ -1,4 +1,4 @@
-* 2004-06-17
+* 2004-06-18
 
   - bugfix: wrong syslog call ('warn' instead of 'warning')
   - update whitelist

@@ -14,7 +14,7 @@ amazon.com			OK
 vger.kernel.org			OK
 # 2004-06-02: karger.ch, no retry
 karger.ch			OK
-# 2004-06-02: lilys.ch, (very slow: 4 hours)
+# 2004-06-02: lilys.ch, (slow: 4 hours)
 server-x001.hostpoint.ch	OK
 # 2004-06-09: roche.com (no retry)
 gw.bas.roche.com		OK
@@ -30,3 +30,5 @@ returns.dowjones.com		OK
 domin.switch.ch			OK
 # 2004-06-18: schlund.de (common pool)
 moutng.kundenserver.de		OK
+# 2004-06-23: accor-hotels.com (slow: 6 hours)
+accor-hotels.com		OK

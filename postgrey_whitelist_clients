@@ -64,3 +64,5 @@ p02m169.mxlogic.net
 /^fmr\d+\.intel\.com$/
 # 2004-09-17: cox-internet.com (no retry, reported by Rod Roark)
 /^fe\d+\.cox-internet\.com$/
+# 2004-10-11: logismata.ch (no retry)
+logismata.ch

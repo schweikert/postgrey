@@ -111,7 +111,7 @@ sub smtpd_access_policy($$)
     $db->{$key}="$first,$now";
 
     # do maintenance if one hour has passed since the last one
-    if($now-$self->{postgrey}{last_maint} > 60) {
+    if($now-$self->{postgrey}{last_maint} > 3600) {
         $self->{postgrey}{last_maint} = $now;
         $self->do_maintenance($now);
     }

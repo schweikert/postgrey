@@ -1,4 +1,4 @@
-* 2004-07-11: version 1.14rc1
+* 2004-07-12: version 1.14
 
   - lookup-by-subnet is default. "transition code" has been implemented, so that
     also a lookup with the unstripped IP will be tried. That way you shouldn't

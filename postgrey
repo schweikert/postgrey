@@ -32,7 +32,8 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             if(/^\/(\S+)\/$/) {
-                push @whitelist_clients, qr{$_}i;
+                # regular expression
+                push @whitelist_clients, qr{$1}i;
             }
             elsif(/^[^\s\/]+$/) {
                 push @whitelist_clients, qr{\Q$_\E$}i;
@@ -56,9 +57,9 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             my ($user, $domain) = split(/\@/, $_, 2);
-            # regular expression
             if(/^\/(\S+)\/$/) {
-                push @whitelist_recipients, qr{$_}i;
+                # regular expression
+                push @whitelist_recipients, qr{$1}i;
             }
             elsif(!/^[^\s\/]+$/) {
                 warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";

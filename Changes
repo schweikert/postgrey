@@ -1,4 +1,4 @@
-* 2004-07-04: version 1.13
+* 2004-07-05: version 1.13
 
   - strip sender address extension (everything after '+'), so that more
     VERP addresses are substituted to a unique string.
@@ -7,6 +7,7 @@
   - allow more than one --whitelist-xy option (Xavier Le Vourch)
   - implemented --relay-window (Tom Baker)
   - reload whitelists on HUP
+  - add postmaster and abuse to recipients whitelist
 
 * 2004-07-02: version 1.12
 

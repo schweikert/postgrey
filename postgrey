@@ -315,8 +315,7 @@ sub main()
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],
             whitelist_recipients_files => $opt{'whitelist-recipients'} ||
-                [ '/etc/postfix/postgrey_whitelist_recipients',
-                  '/etc/postfix/postgrey_whitelist_recipients.local' ],
+                [ '/etc/postfix/postgrey_whitelist_recipients' ],
         },
     }, 'postgrey';
 
@@ -453,8 +452,8 @@ B<postgrey> [I<options>...]
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
 
  Note that the --whitelist-x options can be specified multiple times, and that
- the default is to read the file written above + the same file with .local
- appended.
+ per default /etc/postfix/postgrey_whitelist_clients.local is also read, so
+ that you can put there local entries.
 
 =head1 DESCRIPTION
 
@@ -512,7 +511,6 @@ following files:
  /etc/postfix/postgrey_whitelist_clients
  /etc/postfix/postgrey_whitelist_clients.local
  /etc/postfix/postgrey_whitelist_recipients
- /etc/postfix/postgrey_whitelist_recipients.local
 
 You can specify alternative paths with the --whitelist-x options.
 

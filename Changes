@@ -1,3 +1,7 @@
+* 2004-06-26: version 1.10
+
+  - fix syntax error in code for --lookup-by-subnet (Matt Egan)
+
 * 2004-06-25: version 1.9
 
   - case-insensitive whitelists

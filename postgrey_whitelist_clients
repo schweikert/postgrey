@@ -57,3 +57,5 @@ cs.columbia.edu
 /^smtp\d+\.tiscali\.dk$/
 # 2004-07-04: freshmeat.net (address verification)
 freshmeat.net
+# 2004-07-05: gmail.com (common pool, reported by Eric)
+rproxy.gmail.com

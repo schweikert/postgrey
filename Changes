@@ -1,7 +1,16 @@
-* 2004-07-05: version 1.14rc1
+* 2004-07-11: version 1.15
+
+  - lookup-by-subnet is default. "transition code" has been implemented, so that
+    also a lookup with the unstripped IP will be tried. That way you shouldn't
+    loose any data from the database when moving to version 1.15. Use
+    --lookup-by-host for the old behaviour. All "address pool" entries are
+    remove from the whitelist...
+
+* 2004-07-05: version 1.14
 
   - changed default --max-age to 30, since the db should shrink a lot
     because of the --retry-window functionality.
+  - another Perl 5.8.0 workaround
 
 * 2004-07-05: version 1.13
 
@@ -13,6 +22,7 @@
   - implemented --relay-window (Tom Baker)
   - reload whitelists on HUP
   - add postmaster and abuse to recipients whitelist
+  - add X-Postgrey header to delayed mails
 
 * 2004-07-02: version 1.12
 

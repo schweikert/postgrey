@@ -71,7 +71,7 @@ sub read_recipients_whitelists($)
                     # regular expression
                     push @whitelist_recipients, qr{$1}i;
                 }
-                elsif(!/^[^\s\/]+$/) {
+                elsif(!/^\S+$/) {
                     warn "WARNING: $f line $.: doesn't look like an address\n";
                 }
                 # postfix access(5) syntax:
@@ -112,21 +112,22 @@ sub do_sender_substitutions($$)
     return "$user\@$domain";
 }
 
+# split network and host part and return both
 sub do_client_substitutions($$$)
 {
     my ($self, $ip, $revdns) = @_;
 
-    # --lookup-by-subnet:
-    if($self->{postgrey}{lookup_by_subnet}) {
-        return $ip if $revdns eq 'unknown';
-        my @ip=split(/\./, $ip);
-        return $ip unless defined $ip[3];
-        # skip if it contains the last two IP numbers in the hostname
-        # (we assume it is a pool of dialup addresses of a provider)
-        return $ip  if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
-        return join('.', @ip[0..2], '0');
+    if($self->{postgrey}{lookup_by_host}) {
+        return ($ip, undef);
     }
-    return $ip;
+
+    return ($ip, undef) if $revdns eq 'unknown';
+    my @ip=split(/\./, $ip);
+    return ($ip, undef) unless defined $ip[3];
+    # skip if it contains the last two IP numbers in the hostname
+    # (we assume it is a pool of dialup addresses of a provider)
+    return ($ip, undef) if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
+    return (join('.', @ip[0..2], '0'), $ip[3]);
 }
 
 sub do_maintenance($$)
@@ -196,11 +197,30 @@ sub smtpd_access_policy($$)
 
     # lookup
     my $sender = $self->do_sender_substitutions($attr->{sender});
-    my $client = $self->do_client_substitutions(
-        $attr->{client_address}, $attr->{client_name}
-    );
-    my $key    = lc "$client/$sender/$attr->{recipient}";
+    my ($client_net, $client_host) =
+        $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
+    my $key    = lc "$client_net/$sender/$attr->{recipient}";
     my $val    = $db->{$key};
+
+    # transition code (host lookup -> network lookup): if we find a value with
+    # the original unsubstituted host IP, combine both
+    {
+        my $key_host = lc "$attr->{client_address}/$sender/$attr->{recipient}";
+        my $val_host =  $db->{$key_host};
+        if(defined $val_host) {
+            my ($first_host,  $last_host)  = split(/,/,$val_host);
+            if(defined $val) {
+                my ($first, $last) = split(/,/,$val);
+                $first = $first_host if $first_host < $first;
+                $last  = $last_host  if $last_host  > $last;
+                $val = "$first,$last";
+            }
+            else {
+                $val = "$first_host,$last_host";
+            }
+        }
+    }
+
     my $first;
     my $last_was_successful=0;
     if(defined $val) {
@@ -221,8 +241,13 @@ sub smtpd_access_policy($$)
         $first = $now;
     }
 
-    # update
-    $db->{$key}="$first,$now";
+    # update (put as last element stripped host-part if it was stripped)
+    if(defined $client_host) {
+        $db->{$key}="$first,$now,$client_host";
+    }
+    else {
+        $db->{$key}="$first,$now";
+    }
 
     # do maintenance if one hour has passed since the last one
     if($now-$self->{postgrey}{last_maint} >= 3600) {
@@ -256,9 +281,12 @@ sub main()
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'whitelist-clients=s@', 'whitelist-recipients=s@',
+        'lookup-by-subnet', 'lookup-by-host', 'whitelist-clients=s@', 'whitelist-recipients=s@',
         'retry-window=s',
     ) or exit(1);
+    # note: lookup-by-subnet can be given for compatibility, but it is default
+    # so do not do nothing with it...
+
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
     if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
@@ -309,7 +337,7 @@ sub main()
             max_age          => $opt{'max-age'} || 30,
             last_maint       => time,
             last_maint_keys  => 0, # do it on the first night
-            lookup_by_subnet => $opt{'lookup-by-subnet'},
+            lookup_by_host   => $opt{'lookup-by-host'},
             retry_window     => $retry_window,
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
@@ -448,6 +476,7 @@ B<postgrey> [I<options>...]
      --retry-window=N   allow only N days for the first retrial (default: 2)
                         append 'h' if you want to specify it in hours
      --lookup-by-subnet strip the last 8 bits from IP addresses
+     --lookup-by-host   do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
 
@@ -465,6 +494,12 @@ time that this triplet is seen, or if the triplet was first seen less than
 I<delay> seconds (300 is the default), then the mail gets rejected with a
 temporary error. Hopefully spammers or viruses will not try again later, as it
 is however required per RFC.
+
+Note that you shouldn't use the --lookup-by-host option unless you know what
+you are doing: there are a lot of mail servers that use a pool of addresses to
+send emails, so that they can change IP every time they try again. That's why
+without this option postgrey will strip the last byte of the IP address when
+doing lookups in the database.
 
 =head2 Installation
 

@@ -18,7 +18,7 @@ use BerkeleyDB;
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-'$Revision: 4 $ ' =~ /Revision: (\S*)/;
+'$Revision: 5 $ ' =~ /Revision: (\S*)/;
 my $Revision = $1;
 
 # local policy about what users want greylisting:
@@ -181,11 +181,13 @@ sub pre_loop_hook()
     my ($self) = @_;
 
     # open database with transactions, locking and auto-commit to make it as
-    # safe as possible.
+    # safe as possible. Note that locking is not required if only one process is running
+    # (as it should), but I put it anyway so that the database doesn't get corrupt if
+    # you make the mistake of running two instances with the same db file
     my $env = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
         -Flags    => DB_CREATE|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG|DB_INIT_LOCK,
-        -SetFlags => DB_AUTO_COMMIT,
+        -SetFlags => DB_AUTO_COMMIT|DB_LOG_AUTOREMOVE,
     ) or die "ERROR: can't create DB environment: $!\n";
 
     tie(%{$self->{postgrey}{db}}, 'BerkeleyDB::Btree',
@@ -262,7 +264,7 @@ B<postgrey> [I<options>...]
 
 =head1 DESCRIPTION
 
-Postgry is a Postfix policy server implementing greylisting.
+Postgrey is a Postfix policy server implementing greylisting.
 
 =head1 COPYRIGHT
 

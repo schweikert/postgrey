@@ -10,7 +10,7 @@ use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Daemonize qw( get_uid get_gid set_uid set_gid );
 use Pod::Usage;
 #use Net::RBLClient;
-my $VERSION='1.14.1 (20040711)';
+my $VERSION='1.14.2 (20040715)';
 
 # used in maillog processing
 my $RE_revdns_ip   	= qr/ ([^\[\s]+)\[(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]/;	# ptr[1.2.3.4]
@@ -30,17 +30,18 @@ my %opt = (
 
 	check_sender		=> '',			# = mx,a,mx/24,a/24 # todo=spf - uses Net::DNS
 	show_tries		=> 0,			# number of greylist attempts within --delay
-	seperate_by_subnet	=> '',			# if not blank output this string for every new /24
-	seperate_by_ip	   	=> '',			# if not blank output this string for every new IP
+	separate_by_subnet	=> '',			# if not blank output this string for every new /24
+	separate_by_ip	   	=> '',			# if not blank output this string for every new IP
 	single_line	   	=> 1,			# output everything on a single line? (grouping enabled if false )
 	
 	skip_dnsbl		=> [],			# list of DNSBL servers to check and skip reporting for
 	skip_clients		=> [],			# files of clients to skip reporting	
+	skip_pool		=> 0,			# skip entries that appear to be a provider pool (last 2 ips in ptr)
 	match_clients		=> [], 			# files of ONLY clients to report on
 
 	v 			=> 0,			# verbose? used mainly for script debugging
 	debug_db		=> 0,			# output time() values from btree db
-	debug_re		=> '',			# but only for these hosts (seperate by commas )
+	debug_re		=> '',			# but only for these hosts (separate by commas )
 	);
 
 # start here 
@@ -53,9 +54,9 @@ sub main
 		'return_string|greylist-text=s',
 		'show_tries', 
 		'check_sender=s',
-		'seperate_by_subnet=s', 'seperate_by_ip=s',  
+		'separate_by_subnet=s', 'separate_by_ip=s',  
 		'single_line!',
-		'skip_dnsbl=s@','skip_clients=s@', 'match_clients=s@',
+		'skip_dnsbl=s@','skip_clients=s@', 'match_clients=s@', 'skip_pool', 
 		) or exit(1);
 	if($opt{help})     { pod2usage(1) }
 	if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
@@ -99,12 +100,12 @@ sub postgrey_fatal_report()
 	# foreach: loop through (sorted) fatal triplets and display to STDOUT
 	my ($last_ip,$last_subnet);					# define now
 
-	$opt{seperate_by_ip} 		=~ s|\\n|\n|g;			# do it once before the for loop
-	$opt{seperate_by_subnet} 	=~ s|\\n|\n|g;			# ""
+	$opt{separate_by_ip} 		=~ s|\\n|\n|g;			# do it once before the for loop
+	$opt{separate_by_subnet} 	=~ s|\\n|\n|g;			# ""
 	
 	foreach my $key (@greyfatal)
 	{
-		my ($ip,$sender,$recipient) = split(/\//,$key);		# seperate the triplet
+		my ($ip,$sender,$recipient) = split(/\//,$key);		# separate the triplet
 		
 		my $revdns = $triplets{$key}{revdns};			# we saved revdns during maillog parse, so we dont have to look it up
 
@@ -121,14 +122,14 @@ sub postgrey_fatal_report()
 			$check_sender='A/24';
 		}
 
-		# if seperate_by_ip or seperate_by_subnet display configured text
+		# if separate_by_ip or separate_by_subnet display configured text
 		if ($last_subnet eq $triplets{$key}{subnet}) {
-			print "$opt{seperate_by_ip}" 			if ( ($last_ip ne $ip) and $opt{seperate_by_ip}) ;
+			print "$opt{separate_by_ip}" 			if ( ($last_ip ne $ip) and $opt{separate_by_ip}) ;
 		} else  {
-			if 	( $opt{seperate_by_subnet}	) {
-			 print    $opt{seperate_by_subnet};
-			} elsif ( $opt{seperate_by_ip} 		) { 
-			 print     $opt{seperate_by_ip};
+			if 	( $opt{separate_by_subnet}	) {
+			 print    $opt{separate_by_subnet};
+			} elsif ( $opt{separate_by_ip} 		) { 
+			 print     $opt{separate_by_ip};
 			}
 		}
 
@@ -186,8 +187,9 @@ sub find_and_sort_fatal
 		next unless (/$opt{return_string}/o);			# only look at greylisted lines
 		next unless (/$RE_triplet/o);				# extract the triplet
 		my ($revdns,$ipaddr,$sender,$recipient) = ($1,$2,$3,$4);
-		$sender    = do_sender_substitutions($sender);		
-		my $subnet = do_client_substitutions($ipaddr,$revdns);	# 1.2.3.0
+		my @ip = split(/\./, $ipaddr);
+		$sender      = do_sender_substitutions($sender);		
+		my ($subnet) = do_client_substitutions($ipaddr,$revdns); # 1.2.3.0
 		my $key    = lc "$ipaddr/$sender/$recipient";		# postgrey key
 		my $subkey = lc "$subnet/$sender/$recipient";		# subnet key 1.2.3.0/sender/recipient
 
@@ -201,8 +203,6 @@ sub find_and_sort_fatal
 				print "$testkey : $db->{$testkey} = " .$tdiff . "s \n";	
 			}
 		}
-	
-		next MAILLOG unless is_fatal_triplet($db, $key, $subkey);	# check db, only remember fatals
 
 		# if --match_clients was specified on command line then move on to the next line unless a match is found
 		if ( scalar(@{$opt{match_clients}}) > 0 ) {
@@ -210,15 +210,25 @@ sub find_and_sort_fatal
 					find_in_array($revdns, $opt{MATCH_CLIENT_PTR})     );
 		}
 
+		# if --skip_clients was specified on command line, skip to next line if a match is found
 		next if (	find_in_array($ipaddr, $opt{SKIP_CLIENT_IPS}) or
 				find_in_array($revdns, $opt{SKIP_CLIENT_PTR})	  );			
 
+		# if --skip_pool then if last 2 ips are in ptr skip to next line
+		next if ( $opt{skip_pool} and defined $ip[3] and $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/ );
+		
+		# check the db, proceed if the triplet was fatal
+		next MAILLOG unless is_fatal_triplet($db, $key, $subkey);	
+
+		# if --skip_dnsbl then do RBL lookups (slow!)
 		if ( defined $rbl ) {
 			$rbl->lookup($ipaddr);
 			my @listed = $rbl->listed_by;
 			next if ( scalar(@listed) > 0 );
 			
 		}
+		
+		# we made it past all the filtering checks, remember the triplet as fatal
 
 		$triplets->{$key}{counter}++;				# increase counter for this triplet
 		$triplets->{$key}{revdns}=$revdns;			# save its ptr for later use
@@ -431,7 +441,7 @@ sub setup_dbm
 }
 	
 
-# from postgrey 1.11 http://isg.ee.ethz.ch/tools/postgrey/    
+# from postgrey 1.14 http://isg.ee.ethz.ch/tools/postgrey/    
 sub do_sender_substitutions($)
 {
     my ($addr) = @_;
@@ -446,7 +456,7 @@ sub do_sender_substitutions($)
     return "$user\@$domain";
 }
 
-# from postgrey 1.11 http://isg.ee.ethz.ch/tools/postgrey/    
+# from postgrey 1.14 http://isg.ee.ethz.ch/tools/postgrey/    
 sub do_client_substitutions($$)
 {
     	my ($ip, $revdns) = @_;
@@ -577,6 +587,7 @@ B<postgreyreport> [I<options>...]
      --delay=N                report triplets that did not try again after N seconds (default: 300)
      --greylist-text=TXT      text to match on for greylist maillog lines
 
+     --skip_pool	      Skip report for 'subscriber pools' ( last 2 octets of IP found in PTR name )
      --skip_dnsbl=RBL	      RBL server to query and skip reporting for any listed hosts (SLOW!!)
      --skip_clients=FILE      PTR or IP or REGEXP of clients to skip in report        
      --match_clients=FILE     *ONLY* report if fatal *AND* PTR/IP of client matches
@@ -584,8 +595,8 @@ B<postgreyreport> [I<options>...]
      --show_tries	      display the number of attempts failed triplets made in first column
 
      --nosingle_line	      display sender/recipients grouped by ptr - ip
-     --seperate_by_subnet=TXT display TXT for every new /24 (ex: "=================\n" )
-     --seperate_by_ip=TXT     display TXT for every new IP  (ex: "\n")
+     --separate_by_subnet=TXT display TXT for every new /24 (ex: "=================\n" )
+     --separate_by_ip=TXT     display TXT for every new IP  (ex: "\n")
      --check_sender=LIST      one or more of: mx,mx/24,a,a/24
                               does DNS/A lookups for sender @domain and compares sending IP
                               if match displays "MX" "A" or "MX/24" or "A/24" depending on LIST
@@ -602,7 +613,7 @@ extracts the triplets for any Greylisted lines and looks them up in postgrey.db.
 if the difference in first and last time seen is less than --delay=N then the 
 triplet is considered fatal and displayed to STDOUT
 
-The report sorts by client IP address and 
+The report sorts by client IP address 
 
 
 =head2 Note:
@@ -626,13 +637,13 @@ not giving legit MTA's enough time to try again and you will have lots of inaccu
 	
 	zcat /var/log/maillog.0.gz | \
 	./postgreyreport --nosingle_line --check_sender=mx,a \
-	--seperate_by_subnet=":==================\n"
-	# 94 "=" total, some were omitted for clearity
+	--separate_by_subnet=":==================\n"
+	# 94 "=" total, some were omitted for clarity
 
 =item * Ex Output: ( POD wrapping will mess this up, view source )
 
-:============================================================================================
-unknown                 4.29.43.31
+ :============================================================================================
+ unknown                 4.29.43.31
                     marissa_mcclendonuu@abit.com.tw                      user1@recipient1.com 
                             jake_meyerdt@ali.com.tw                      user2@recipient1.com 
                         jenny_banks_sh@translate.ru                      user1@recipient2.com 
@@ -640,22 +651,32 @@ unknown                 4.29.43.31
                                  aep@notimexico.com                      user2@recipient1.com  
                     brittneystanley_ei@cetra.org.tw                      user2@recipient1.com  
                             brendasheehan_cw@lib.ru                      user2@recipient1.com  
-:============================================================================================
-lsanca1-ar5-127-189.biz.dsl.gtei.net      4.33.127.189
+ :============================================================================================
+ lsanca1-ar5-127-189.biz.dsl.gtei.net      4.33.127.189
     A      fokkensr@lsanca1-ar5-127-189.biz.dsl.gtei.net                 user2@recipient1.com 
                        
                        cyxlfrfwciercu@publicist.com                      user3@recipient4.com  
-:============================================================================================
-smtpout.mac.com       17.250.248.83
+ :============================================================================================
+ smtpout.mac.com       17.250.248.83
                              do_not_reply@apple.com                      user4@recipient5.com 
 
-smtpout.mac.com       17.250.248.88
+ smtpout.mac.com       17.250.248.88
    MX                             legituser@mac.com                      user6@recipient7.com 
-:============================================================================================
+ :============================================================================================
 
 
 =head1 HISTORY
 
+
+B<1.14.2  20040715>
+
+=over 4
+
+  BUGFIX: (automatic) lookup-by-subnet support was broken, fixed.
+  BUGFIX: corrected a few spelling errors
+  new Option: --skip_pool   Skip report for 'subscriber pools' 
+
+=back
 
 B<1.14.1  20040712>
 
@@ -688,7 +709,7 @@ B<1.6.4  20040618>
   Initial Public Version (postgrey/contrib)
 
 =back
-              
+
 =head1 AUTHOR
 
 S<Tom Baker E<lt>tbaker@bakerfl.orgE<gt>>

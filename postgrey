@@ -482,12 +482,13 @@ sub pre_loop_hook()
         -Env      => $self->{postgrey}{db_env}
     ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey.db: $!\n";
 
-    # create client-awl database
-    tie(%{$self->{postgrey}{db_cawl}}, 'BerkeleyDB::Btree',
-        -Filename => 'postgrey_clients.db',
-        -Flags    => DB_CREATE,
-        -Env      => $self->{postgrey}{db_env}
-    ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey_clients.db: $!\n";
+    if($self->{postgrey}{awl_clients}) {
+        tie(%{$self->{postgrey}{db_cawl}}, 'BerkeleyDB::Btree',
+            -Filename => 'postgrey_clients.db',
+            -Flags    => DB_CREATE,
+            -Env      => $self->{postgrey}{db_env}
+        ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey_clients.db: $!\n";
+    }
 }
 
 sub mux_input()

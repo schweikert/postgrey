@@ -20,7 +20,7 @@ use POSIX qw(strftime);
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.14rc2";
+my $VERSION = "1.14rc4";
 my $hostname = hostname;
 
 sub read_clients_whitelists($)
@@ -180,6 +180,26 @@ sub do_maintenance($$)
     }
 }
 
+sub is_new_instance($$)
+{
+    my ($self, $inst) = @_;
+    # we keep a list of the last 10 "instances", which identify unique messages
+    # so that for example we only put one X-Greylist header per message.
+    $self->{postgrey}{instances} = [ undef, undef, undef, undef, undef,
+                                     undef, undef, undef, undef, undef ]
+        unless defined $self->{postgrey}{instances};
+
+    my $i = $self->{postgrey}{instances};
+    return 0 if scalar grep { $_ eq $inst } @$i;
+    
+    # put new value into the array
+    unshift @$i, $inst;
+    pop @$i;
+
+    $self->log(2, "inst array = ".join(', ', @$i));
+    return 1;
+}
+
 # main routine: based on attributes specified as argument, return policy decision
 sub smtpd_access_policy($$)
 {
@@ -272,9 +292,11 @@ sub smtpd_access_policy($$)
         return 'DUNNO';
     }
     else {
-        my $date = strftime("%a, %d %b %Y %T %Z");
-        return 'PREPEND X-Greylist: delayed '.($now-$first).
-            " seconds by Postgrey $VERSION at $hostname; $date";
+        if($self->is_new_instance($attr->{instance})) {
+            my $date = strftime("%a, %d %b %Y %T %Z", localtime);
+            return 'PREPEND X-Greylist: delayed '.($now-$first).
+                " seconds by Postgrey $VERSION at $hostname; $date";
+        }
     }
 }
 

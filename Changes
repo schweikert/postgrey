@@ -2,6 +2,10 @@
    
    - increase max-time to 35, so that monthly newsletter are not
      greylisted (Stephen Gildea)
+   - set LC_ALL=C so that no localized text is output at the SMTP level
+     (Michal Trojnara)
+   - add a "help" URL to the Greylisted for ... message (Steve Traugott)
+   - updated whitelist
 
 * 2004-08-18: version 1.15
 

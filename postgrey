@@ -303,6 +303,9 @@ sub main()
     # save arguments for Net:Server HUP restart
     my @ARGV_saved = @ARGV;
 
+    # do not output any localized texts!
+    $ENV{LC_ALL}='C';
+
     # parse options
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
@@ -367,7 +370,7 @@ sub main()
             lookup_by_host   => $opt{'lookup-by-host'},
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
-            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds',
+            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help)',
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],

@@ -26,7 +26,7 @@ sub read_whitelists($)
 
     # clients
     my @whitelist_clients;
-    if(open(CLIENTS, $self->{postgrey}{whitelist_clients})) {
+    if(open(CLIENTS, $self->{postgrey}{whitelist_clients_file})) {
         while(<CLIENTS>) {
             s/^\s+//; s/\s+$//;
             next if $_ eq '';
@@ -47,7 +47,7 @@ sub read_whitelists($)
 
     # recipients
     my @whitelist_recipients;
-    if(open(RECIPIENTS, $self->{postgrey}{whitelist_recipients})) {
+    if(open(RECIPIENTS, $self->{postgrey}{whitelist_recipients_file})) {
         while(<RECIPIENTS>) {
             s/^\s+//; s/\s+$//;
             next if $_ eq '';

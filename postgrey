@@ -54,8 +54,11 @@ sub do_maintenance($$)
     my $db_env = $self->{postgrey}{db_env};
 
     # remove old db logs
-    $db_env->txn_checkpoint(0, 0);
+
+    $self->log(2, "cleaning up old logs...");
+    $db_env->txn_checkpoint(0, 0) or warn "can't checkpoint !?";
     for my $l ($db_env->log_archive(DB_ARCH_ABS)) {
+        $self->log(2, "rm $l");
         unlink $l or warn "can't remove db log $l: $!\n";
     }
 
@@ -75,9 +78,10 @@ sub do_maintenance($$)
                 delete $db->{$key};
             }
         }
-        $self->log(2, "cleaning finished");
         $self->{postgrey}{last_maint_keys}=$now;
     }
+
+    $self->log(2, "cleaning finished");
 }
 
 # main routine: based on attributes specified as argument, return policy decision

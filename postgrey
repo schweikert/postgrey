@@ -77,8 +77,13 @@ sub do_verp_substitutions($)
 sub do_maintenance($$)
 {
     my ($self, $now) = @_;
-    my $db  = $self->{postgrey}{db};
+    my $db     = $self->{postgrey}{db};
+    my $db_env = $self->{postgrey}{db_env};
 
+    # remove old db logs
+    $db_env->log_archive(DB_ARCH_REMOVE);
+
+    # remove old keys
     for my $key (keys %$db) {
         my $last = (split(/,/,$db->{$key}))[1];
         if($now - $last > $self->{postgrey}{max_age}) {
@@ -188,16 +193,16 @@ sub pre_loop_hook()
     # open database with transactions, logging and auto-commit to make it as
     # safe as possible. Note that locking is not required since only one
     # process is running
-    my $env = BerkeleyDB::Env->new(
+    $self->{postgrey}{db_env} = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
         -Flags    => DB_CREATE|DB_RECOVER|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
-        -SetFlags => DB_AUTO_COMMIT|DB_LOG_AUTOREMOVE|DB_TXN_NOSYNC,
+        -SetFlags => DB_AUTO_COMMIT|DB_TXN_NOSYNC,
     ) or die "ERROR: can't create DB environment: $!\n";
 
     tie(%{$self->{postgrey}{db}}, 'BerkeleyDB::Btree',
         -Filename => 'postgrey.db',
-        -Flags    =>  DB_CREATE,
-        -Env      => $env
+        -Flags    => DB_CREATE,
+        -Env      => $self->{postgrey}{db_env}
     ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey.db: $!\n";
 }
 

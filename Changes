@@ -1,3 +1,7 @@
+* 2004-06-07: version 1.x
+
+  - rewritten verp substitution code
+
 * 2004-06-03: version 1.5
 
   - default delay is now 300 seconds instead of 600 (received reports of

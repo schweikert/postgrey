@@ -1,0 +1,13 @@
+policy      = 1.4
+name        = postgrey
+type        = tool
+platform    = unix
+description = Postfix Greylist Policy Server
+pod         = postgrey
+owner       = dws
+
+*** install ***
+
+755 root:root	postgrey	ISGTC/bin
+
+*** depends ***

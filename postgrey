@@ -81,7 +81,9 @@ sub do_maintenance($$)
     my $db_env = $self->{postgrey}{db_env};
 
     # remove old db logs
-    $db_env->log_archive(DB_ARCH_REMOVE);
+    for my $l ($db_env->log_archive(DB_ARCH_ABS)) {
+        unlink $l or warn "can't remove db log $l: $!\n";
+    }
 
     # remove old keys
     for my $key (keys %$db) {
@@ -109,7 +111,7 @@ sub smtpd_access_policy($$)
     $db->{$key}="$first,$now";
 
     # do maintenance if one hour has passed since the last one
-    if($now-$self->{postgrey}{last_maint} > 3600) {
+    if($now-$self->{postgrey}{last_maint} > 60) {
         $self->{postgrey}{last_maint} = $now;
         $self->do_maintenance($now);
     }

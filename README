@@ -9,6 +9,7 @@ Requirements
 
 - Perl
 - Net::Server (Perl Module)
+- IO::Multiplex (Perl Module)
 - BerkeleyDB (Perl Module)
 
 

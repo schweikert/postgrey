@@ -20,7 +20,7 @@ use POSIX qw(strftime);
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.16";
+my $VERSION = "1.17-rc1";
 my $hostname = hostname;
 
 sub read_clients_whitelists($)
@@ -175,8 +175,27 @@ sub do_maintenance($$)
                 $nr_keys_after++;
             }
         }
+        $self->log(2, "cleaning host/sender/recipient database finished. before: $nr_keys_before, after: $nr_keys_after");
+
+        if($self->{postgrey}{awl_clients}) {
+            # cleanup clients auto-whitelist database
+            my $cawl_db  = $self->{postgrey}{db_cawl};
+            ($nr_keys_before, $nr_keys_after) = (0, 0);
+            $nr_keys_after=0;
+            while (my ($key, $value) = each %$cawl_db) {
+                my ($cawl_count, $cawl_last_seen) = split(/,/, $value);
+                $nr_keys_before++;
+                if($now - $cawl_last_seen > $max_age) {
+                    delete $cawl_db->{$key};
+                }
+                else {
+                    $nr_keys_after++;
+                }
+            }
+            $self->log(2, "cleaning clients database finished. before: $nr_keys_before, after: $nr_keys_after");
+        }
+
         $self->{postgrey}{last_maint_keys}=$now;
-        $self->log(2, "cleaning finished. before: $nr_keys_before, after: $nr_keys_after");
     }
 }
 
@@ -207,13 +226,13 @@ sub smtpd_access_policy($$)
 
     # whitelists
     for my $w (@{$self->{postgrey}{whitelist_clients}}) {
-        return 'dunno' if $attr->{client_name} =~ $w;
+        return 'DUNNO' if $attr->{client_name} =~ $w;
     }
     for my $w (@{$self->{postgrey}{whitelist_ips}}) {
-        return 'dunno' if $attr->{client_address} =~ $w;
+        return 'DUNNO' if $attr->{client_address} =~ $w;
     }
     for my $w (@{$self->{postgrey}{whitelist_recipients}}) {
-        return 'dunno' if $attr->{recipient} =~ $w;
+        return 'DUNNO' if $attr->{recipient} =~ $w;
     }
 
     # lookup
@@ -222,25 +241,6 @@ sub smtpd_access_policy($$)
         $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
     my $key    = lc "$client_net/$sender/$attr->{recipient}";
     my $val    = $db->{$key};
-
-    # transition code (host lookup -> network lookup): if we find a value with
-    # the original unsubstituted host IP, combine both
-    if($client_net ne $attr->{client_address}) {
-        my $key_host = lc "$attr->{client_address}/$sender/$attr->{recipient}";
-        my $val_host =  $db->{$key_host};
-        if(defined $val_host) {
-            my ($first_host,  $last_host)  = split(/,/,$val_host);
-            if(defined $val) {
-                my ($first, $last) = split(/,/,$val);
-                $first = $first_host if $first_host < $first;
-                $last  = $last_host  if $last_host  > $last;
-                $val = "$first,$last";
-            }
-            else {
-                $val = "$first_host,$last_host";
-            }
-        }
-    }
 
     my $first;
     my $last_was_successful=0;
@@ -276,15 +276,48 @@ sub smtpd_access_policy($$)
         $self->do_maintenance($now);
     }
 
-    # decide
     $self->log(4, "request age ".($now - $first));
     my $diff = $self->{postgrey}{delay} - ($now - $first);
+
+    # auto whitelist clients
+    # algorithm:
+    # - on successful entry in the greylist db of a triplet:
+    #   - client not whitelisted yet? -> increase count, whitelist if count > 10 or so
+    #   - client whitelisted already? -> update last-seen timestamp
+    if($self->{postgrey}{awl_clients}) {
+        my $cawl_db  = $self->{postgrey}{db_cawl};
+        my $cawl_key = $attr->{client_address};
+        my $cawl_val = $cawl_db->{$cawl_key};
+        my ($cawl_count, $cawl_last_seen) = (0, undef);
+        if(defined $cawl_val) {
+            ($cawl_count, $cawl_last_seen) = split(/,/,$cawl_val);
+        }
+        
+        # update if successful entry:
+        if($diff <= 0 ) {
+            $cawl_last_seen = $now;
+            # update count if initial entry in the db:
+            $cawl_count++ if $last_was_successful;
+            $cawl_db->{$cawl_key}="$cawl_count,$cawl_last_seen" if $cawl_count;
+        }
+
+        # whitelist if count is enough
+        if($cawl_count >= $self->{postgrey}{awl_clients}) {
+            $cawl_count++; # for statistics
+            $cawl_db->{$cawl_key}="$cawl_count,$cawl_last_seen";
+            return 'DUNNO';
+        }
+    }
+
+    # not enough waited? -> greylist
     if ($diff > 0 ) {
         my $msg = $self->{postgrey}{greylist_text};
         $msg =~ s/\%s/$diff/;
         return "$self->{postgrey}{greylist_action} $msg";
     }
-    elsif($last_was_successful) {
+
+    # X-Greylist header:
+    if($last_was_successful) {
         # we don't add an header, because probably this message wasn't delayed
         # at all, since the previous one could pass through already
         return 'DUNNO';
@@ -309,9 +342,10 @@ sub main()
     # parse options
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
-        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
+        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'group=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'lookup-by-host', 'whitelist-clients=s@', 'whitelist-recipients=s@',
+        'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:i', 
+        'whitelist-clients=s@', 'whitelist-recipients=s@',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
@@ -352,6 +386,7 @@ sub main()
             port             => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto            => $opt{inet} ? 'tcp' : 'unix',
             user             => $opt{user} || 'postgrey',
+            group            => $opt{group} || 'nobody',
             dbdir            => $opt{dbdir} || '/var/spool/postfix/postgrey',
             setsid           => $opt{daemonize} ? 1 : undef,
             pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
@@ -368,6 +403,8 @@ sub main()
             last_maint       => time,
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
+            awl_clients      => defined $opt{'auto-whitelist-clients'} ?
+                ($opt{'auto-whitelist-clients'} ? $opt{'auto-whitelist-clients'} : 5) : undef,
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
             greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help)',
@@ -386,6 +423,7 @@ sub main()
     $server->read_clients_whitelists();
     $server->read_recipients_whitelists();
 
+    $0 = join(' ', @{$server->{server}{commandline}});
     $server->run;
 }
 
@@ -438,6 +476,13 @@ sub pre_loop_hook()
         -Flags    => DB_CREATE,
         -Env      => $self->{postgrey}{db_env}
     ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey.db: $!\n";
+
+    # create client-awl database
+    tie(%{$self->{postgrey}{db_cawl}}, 'BerkeleyDB::Btree',
+        -Filename => 'postgrey_clients.db',
+        -Flags    => DB_CREATE,
+        -Env      => $self->{postgrey}{db_env}
+    ) or die "ERROR: can't create database $self->{server}{dbdir}/postgrey_clients.db: $!\n";
 }
 
 sub mux_input()
@@ -501,6 +546,7 @@ B<postgrey> [I<options>...]
  -d, --daemonize         run in the background
      --pidfile=PATH      put daemon pid into this file
      --user=USER         run as USER (default: postgrey)
+     --group=GROUP       run as group GROUP (default: nobody)
      --dbdir=PATH        put db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N           greylist for N seconds (default: 300)
      --max-age=N         delete entries older than N days since the last time
@@ -514,6 +560,9 @@ B<postgrey> [I<options>...]
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
+     --auto-whitelist-clients[=N] whitelist host after first successful delievery
+                                  N is the minimal count of mails before a client is 
+                                  whitelisted (default: 5)
 
  Note that the --whitelist-x options can be specified multiple times,
  and that per default /etc/postfix/postgrey_whitelist_clients.local is

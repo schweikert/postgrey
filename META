@@ -5,6 +5,7 @@ platform    = unix
 description = Postfix Greylist Policy Server
 pod         = postgrey
 owner       = dws
+public      = yes
 
 *** install ***
 

@@ -125,8 +125,9 @@ sub smtpd_access_policy($$)
 
     # decide
     $self->log(4, "request age ".($now - $first));
-    if ($now - $first < $self->{postgrey}{delay}) {
-        return "defer_if_permit Greylisted for $self->{postgrey}{delay} seconds...";
+    my $diff = $self->{postgrey}{delay} - ($now - $first);
+    if ($diff > 0 ) {
+        return "defer_if_permit Greylisted for $diff seconds...";
     }
 
     return 'dunno';
@@ -159,7 +160,6 @@ sub main()
     my $server = bless {
         server => {
             commandline     => [ $0, @ARGV_saved ],
-            delay           => $opt{delay} || 600,
             port            => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto           => $opt{inet} ? 'tcp' : 'unix',
             user            => $opt{user} || 'postgrey',
@@ -173,7 +173,7 @@ sub main()
             syslog_ident    => 'postgrey',
         },
         postgrey => {
-            delay          => $opt{delay}     || 600,
+            delay          => $opt{delay}     || 300,
             dbdir          => $opt{dbdir}     || '/var/spool/postfix/postgrey',
             max_age        => $opt{'max-age'} || 14,
             last_maint     => time(),
@@ -284,7 +284,7 @@ B<postgrey> [I<options>...]
      --pidfile=PATH     put daemon pid into this file
      --user=USER        run as USER (default: postgrey)
      --dbdir=PATH       put db files in PATH (default: /var/spool/postfix/postgrey)
-     --delay=N          greylist for N seconds (default: 600)
+     --delay=N          greylist for N seconds (default: 300)
      --max-age=N        delete entries older than N days since the last time
                         that they have been seen (default: 14)
 
@@ -295,7 +295,7 @@ Postgrey is a Postfix policy server implementing greylisting.
 When a request for delivery of a mail is received by Postfix via SMTP, the
 triplet C<CLIENT_IP> / C<SENDER> / C<RECIPIENT> is built. If it is the first
 time that this triplet is seen, or if the triplet was first seen less than
-I<delay> seconds (600 is the default), then the mail gets rejected with a
+I<delay> seconds (300 is the default), then the mail gets rejected with a
 temporary error. Hopefully spammers or viruses will not try again later, as it
 is however required per RFC.
 

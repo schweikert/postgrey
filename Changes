@@ -1,7 +1,8 @@
-* 2004-07-15: version 1.15xx
+* 2004-07-15: version 1.15
 
   - fixed --retry-window with hours (Tom Baker)
   - update postgreyreport to version 1.14.2 (Tom Baker)
+  - update whitelist
 
 * 2004-07-12: version 1.14
 

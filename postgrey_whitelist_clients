@@ -57,3 +57,8 @@ freshmeat.net
 zd-swx.com
 # 2004-07-11: lockergnome.wc09.net (unique sender with letters, reported by Bill Landry)
 lockergnome.wc09.net
+# 2004-07-19: mxlogic.net (no retry, reported by Eric)
+p01m168.mxlogic.net
+p02m169.mxlogic.net
+# 2004-08-18: unizh.ch (no retry)
+/^idmailgate\d+\.unizh\.ch$/

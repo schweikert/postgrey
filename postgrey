@@ -20,6 +20,53 @@ use vars qw(@ISA);
 
 my $VERSION = '1.0';
 
+sub read_whitelists($)
+{
+    my ($self) = @_;
+
+    # clients
+    my @whitelist_clients;
+    if(open(CLIENTS, $self->{postgrey}{whitelist_clients})) {
+        while(<CLIENTS>) {
+            s/^\s+//; s/\s+$//;
+            next if $_ eq '';
+            next if /^#/;
+            if(/^\S+$/) {
+                push @whitelist_clients, qr{$_};
+            }
+            else {
+                warn "$self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname";
+            }
+        }
+    }
+    else {
+        warn "can't open whitelist-clients: $self->{postgrey}{whitelist_clients_file}";
+    }
+    close(CLIENTS);
+    $self->{postgrey}{whitelist_clients} = \@whitelist_clients;
+
+    # recipients
+    my @whitelist_recipients;
+    if(open(RECIPIENTS, $self->{postgrey}{whitelist_recipients})) {
+        while(<RECIPIENTS>) {
+            s/^\s+//; s/\s+$//;
+            next if $_ eq '';
+            next if /^#/;
+            if(/^\S+$/ and /\@/) {
+                push @whitelist_recipients, qr{$_};
+            }
+            else {
+                warn "$self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address";
+            }
+        }
+    }
+    else {
+        warn "can't open whitelist-recipients: $self->{postgrey}{whitelist_recipients_file}";
+    }
+    close(RECIPIENTS);
+    $self->{postgrey}{whitelist_recipients} = \@whitelist_recipients;
+}
+
 sub do_sender_substitutions($$)
 {
     my ($self, $addr) = @_;
@@ -100,6 +147,14 @@ sub smtpd_access_policy($$)
     my $db  = $self->{postgrey}{db};
     my $now = time();
 
+    # whitelists
+    for my $w (@{$self->{postgrey}{whitelist_clients}}) {
+        return 'dunno' if $attr->{client_name} =~ $w;
+    }
+    for my $w (@{$self->{postgrey}{whitelist_recipients}}) {
+        return 'dunno' if $attr->{recipient} =~ $w;
+    }
+
     # lookup
     my $sender = $self->do_sender_substitutions($attr->{sender});
     my $client = $self->do_client_substitutions(
@@ -138,7 +193,8 @@ sub main()
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet') or exit(1);
+        'lookup-by-subnet', 'whitelist-clients=s', 'whitelist-recipients=s'
+        ) or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
     if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
@@ -155,31 +211,38 @@ sub main()
     # create Net::Server object and run it
     my $server = bless {
         server => {
-            commandline     => [ $0, @ARGV_saved ],
-            port            => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
-            proto           => $opt{inet} ? 'tcp' : 'unix',
-            user            => $opt{user} || 'postgrey',
-            dbdir           => $opt{dbdir} || '/var/spool/postfix/postgrey',
-            setsid          => $opt{daemonize} ? 1 : undef,
-            pid_file        => $opt{daemonize} ? $opt{pidfile} : undef,
-            log_level       => $opt{verbose} ? 4 : 2,
-            log_file        => $opt{daemonize} ? 'Sys::Syslog' : undef,
-            syslog_logsock  => $^O eq 'solaris' ? 'inet' : 'unix',
-            syslog_facility => 'mail',
-            syslog_ident    => 'postgrey',
+            commandline      => [ $0, @ARGV_saved ],
+            port             => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
+            proto            => $opt{inet} ? 'tcp' : 'unix',
+            user             => $opt{user} || 'postgrey',
+            dbdir            => $opt{dbdir} || '/var/spool/postfix/postgrey',
+            setsid           => $opt{daemonize} ? 1 : undef,
+            pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
+            log_level        => $opt{verbose} ? 4 : 2,
+            log_file         => $opt{daemonize} ? 'Sys::Syslog' : undef,
+            syslog_logsock   => $^O eq 'solaris' ? 'inet' : 'unix',
+            syslog_facility  => 'mail',
+            syslog_ident     => 'postgrey',
         },
         postgrey => {
-            delay           => $opt{delay}     || 300,
-            dbdir           => $opt{dbdir}     || '/var/spool/postfix/postgrey',
-            max_age         => $opt{'max-age'} || 14,
-            last_maint      => time,
-            last_maint_keys => 0, # do it on the first night
+            delay            => $opt{delay}     || 300,
+            dbdir            => $opt{dbdir}     || '/var/spool/postfix/postgrey',
+            max_age          => $opt{'max-age'} || 14,
+            last_maint       => time,
+            last_maint_keys  => 0, # do it on the first night
             lookup_by_subnet => $opt{'lookup-by-subnet'},
+            whitelist_clients_file    => $opt{'whitelist-clients'} ||
+                '/etc/postfix/postgrey_whitelist_clients',
+            whitelist_recipients_file => $opt{'whitelist-recipients'} ||
+                '/etc/postfix/postgrey_whitelist_recipients',
         },
     }, 'postgrey';
 
     # max_age is in days
     $server->{postgrey}{max_age}*=3600*24;
+
+    # read whitelist
+    $server->read_whitelists();
 
     $server->run;
 }
@@ -286,6 +349,8 @@ B<postgrey> [I<options>...]
      --max-age=N        delete entries older than N days since the last time
                         that they have been seen (default: 14)
      --lookup-by-subnet strip the last 8 bits from IP addresses
+     --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
+     --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
 
 =head1 DESCRIPTION
 
@@ -320,22 +385,17 @@ Put something like this in /etc/main.cf:
  smtpd_recipient_restrictions =
                ...
                reject_unauth_destination
-               check_client_access    hash:/etc/postfix/postgrey_client_access
-               check_recipient_access hash:/etc/postfix/postgrey_recipient_access
                check_policy_service inet:127.0.0.1:10023
 
 =item *
 
-Install the provided postgrey_client_access in /etc/postfix and postmap it.
-Some servers do not behave correctly and do not resend mails (as required in
-the standard) or use complicated unique return addresses.
+Install the provided postgrey_whitelist_clients and
+postgrey_whitelist_recipients in /etc/postfix.
 
 =item *
 
-Put in /etc/postfix/postgrey_recipient_access users that do not want greylisting
-like this:
-
-  i_like_spam@ee.ethz.ch                OK
+Put in /etc/postfix/postgrey_whitelist_recipients users that do not want
+greylisting.
 
 =back
 

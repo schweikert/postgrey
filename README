@@ -1,16 +1,17 @@
 
 
-    Postgrey 1.0 - a Postfix policy server for greylisting
-    ======================================================
+    Postgrey - a Postfix policy server for greylisting
+    ==================================================
 
 
 Requirements
 ------------
 
-- Perl
+- Perl >= 5.6.0
 - Net::Server (Perl Module)
 - IO::Multiplex (Perl Module)
 - BerkeleyDB (Perl Module)
+- Berkeley DB >= 4.1 (Library)
 
 
 Documentation

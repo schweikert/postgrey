@@ -361,7 +361,7 @@ sub main()
         postgrey => {
             delay            => $opt{delay}     || 300,
             dbdir            => $opt{dbdir}     || '/var/spool/postfix/postgrey',
-            max_age          => $opt{'max-age'} || 30,
+            max_age          => $opt{'max-age'} || 35,
             last_maint       => time,
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
@@ -501,7 +501,7 @@ B<postgrey> [I<options>...]
      --dbdir=PATH        put db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N           greylist for N seconds (default: 300)
      --max-age=N         delete entries older than N days since the last time
-                         that they have been seen (default: 30)
+                         that they have been seen (default: 35)
      --retry-window=N    allow only N days for the first retrial (default: 2)
                          append 'h' if you want to specify it in hours
      --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)

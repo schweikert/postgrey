@@ -1,3 +1,8 @@
+* 2004-08-18: version XX
+   
+   - increase max-time to 35, so that monthly newsletter are not
+     greylisted (Stephen Gildea)
+
 * 2004-08-18: version 1.15
 
   - fixed --retry-window with hours (Tom Baker)

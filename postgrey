@@ -18,7 +18,7 @@ use Fcntl ':flock'; # import LOCK_* constants
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.9";
+my $VERSION = "1.11rc1";
 
 sub read_whitelists($)
 {
@@ -31,7 +31,10 @@ sub read_whitelists($)
             s/^\s+//; s/\s+$//;
             next if $_ eq '';
             next if /^#/;
-            if(/^\S+$/) {
+            if(/^\/(\S+)\/$/) {
+                push @whitelist_clients, qr{$_}i;
+            }
+            elsif(/^[^\s\/]+$/) {
                 push @whitelist_clients, qr{\Q$_\E$}i;
             }
             else {
@@ -53,7 +56,11 @@ sub read_whitelists($)
             next if $_ eq '';
             next if /^#/;
             my ($user, $domain) = split(/\@/, $_, 2);
-            if(!/^\S+$/) {
+            # regular expression
+            if(/^\/(\S+)\/$/) {
+                push @whitelist_recipients, qr{$_}i;
+            }
+            elsif(!/^[^\s\/]+$/) {
                 warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";
             }
             # postfix access(5) syntax:

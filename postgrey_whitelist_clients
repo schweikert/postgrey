@@ -25,7 +25,7 @@ server-x001.hostpoint.ch
 gw.bas.roche.com
 # 2004-06-09: newsletter (no retry)
 mail.hhlaw.com
-# 2004-06-09: no retry
+# 2004-06-09: no retry (reported by Ralph Hildebrandt)
 prd051.appliedbiosystems.com
 # 2004-06-17: swissre.com (no retry)
 swissre.com
@@ -33,7 +33,11 @@ swissre.com
 returns.dowjones.com
 # 2004-06-18: switch.ch (works but personnel is confused by the error)
 domin.switch.ch
-# 2004-06-18: schlund.de (common pool)
+# 2004-06-18: schlund.de (common pool, reported by Klaus Steinberger)
 moutng.kundenserver.de
 # 2004-06-23: accor-hotels.com (slow: 6 hours)
 accor-hotels.com
+# 2004-06-29: rr.com (no retry, reported by Duncan Hill)
+/^ms-smtp.*\.rr\.com$/
+# 2004-06-29: cox.net (no retry, reported by Duncan Hill)
+/^lake.*mta.*\.cox\.net$/

@@ -1,8 +1,10 @@
-VERSION = 1.9
+VERSION = 1.11rc1
 PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 
 version:
 	perl -pi -e 's|^my \$$VERSION.*|my \$$VERSION = "$(VERSION)";|' postgrey
+
+tarball: pub/postgrey-$(VERSION).tar.gz
 
 pub/postgrey-$(VERSION).tar.gz: version
 	mkdir -p postgrey-$(VERSION)/contrib

@@ -26,6 +26,7 @@ sub policing_is_wanted($)
 
     my %greylist_domains = (
         'list.ee.ethz.ch' => 1,
+        'iis.ee.ethz.ch' => 1,
     );
 
     my %greylist_users = (

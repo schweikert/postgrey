@@ -1,6 +1,7 @@
 * 2004-06-25:
 
   - case-insensitive whitelists
+  - fix permissions of --unix socket (Arnaud Launay)
 
 * 2004-06-24: version 1.8
 

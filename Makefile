@@ -1,10 +1,11 @@
-VERSION = 1.0
+VERSION = 1.1
 
 tarball:
 	mkdir -p postgrey-$(VERSION)
-	./isgtc_to_public postgrey >postgrey-$(VERSION)/postgrey
+	env VERSION=$(VERSION) \
+		./isgtc_to_public postgrey >postgrey-$(VERSION)/postgrey
 	chmod +x postgrey-$(VERSION)/postgrey
-	cp README postgrey-$(VERSION)/README
+	cp Changes README postgrey-$(VERSION)
 	cp postgrey_client_access postgrey-$(VERSION)
 	[ -d pub ] || mkdir pub
 	gtar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)

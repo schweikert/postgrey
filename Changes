@@ -1,3 +1,13 @@
+* 2004-07-04: version 1.13
+
+  - strip sender address extension (everything after '+'), so that more
+    VERP addresses are substituted to a unique string.
+    (Stephane Bortzmeyer, Santiago Vila)
+  - update whitelist
+  - allow more than one --whitelist-xy option (Xavier Le Vourch)
+  - implemented --relay-window (Tom Baker)
+  - reload whitelists on HUP
+
 * 2004-07-02: version 1.12
 
   - support IPs in the postgrey_whitelist_clients file (Tom Baker)
@@ -77,3 +87,6 @@
 * 2004-05-20: version 1.0
 
   - initial public release
+
+Note: The names in braces do usually give credit where the idea comes from
+      and not who did implement it (which is mostly me)

@@ -43,9 +43,9 @@ accor-hotels.com
 /^lake.*mta.*\.cox\.net$/
 # 2004-06-29: motorola.com (no retry)
 mot.com
-# 2004-07-01: nic.fr (adress verification fails, reported by Arnaud Launay)
+# 2004-07-01: nic.fr (address verification, reported by Arnaud Launay)
 nic.fr
-# 2004-07-01: verizon.net (source address checking, reported by Bill Moran and Eric)
+# 2004-07-01: verizon.net (address verification, reported by Bill Moran and Eric)
 /^sc\d+pub\.verizon\.net$/
 # 2004-07-02: cs.columbia.edu (no retry)
 cs.columbia.edu
@@ -53,3 +53,7 @@ cs.columbia.edu
 66.216.126.174
 # 2004-07-02: telekom.de (slow: 6 hours)
 /^mail\d+\.telekom\.de$/
+# 2004-07-04: tiscali.dk (slow: 12 hours, reported by Klaus Alexander Seistrup)
+/^smtp\d+\.tiscali\.dk$
+# 2004-07-04: freshmeat.net (address verification)
+freshmeat.net

@@ -18,78 +18,83 @@ use Fcntl ':flock'; # import LOCK_* constants
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.11";
+my $VERSION = "1.12";
 
-sub read_whitelists($)
+sub read_clients_whitelists($)
 {
     my ($self) = @_;
 
-    # clients
     my @whitelist_clients = ();
     my @whitelist_ips = ();
-    if(open(CLIENTS, $self->{postgrey}{whitelist_clients_file})) {
-        while(<CLIENTS>) {
-            s/^\s+//; s/\s+$//;
-            next if $_ eq '';
-            next if /^#/;
-            if(/^\/(\S+)\/$/) {
-                # regular expression
-                push @whitelist_clients, qr{$1}i;
-            }
-            elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
-                # IP address or part of it
-                push @whitelist_ips, qr{^$_};
-            }
-            # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
-            elsif(/^\S+$/) {
-                push @whitelist_clients, qr{\Q$_\E$}i;
-            }
-            else {
-                warn "WARNING: $self->{postgrey}{whitelist_clients_file} line $.: doesn't look like a hostname\n";
+    for my $f (@{$self->{postgrey}{whitelist_clients_file}}) {
+        if(open(CLIENTS, $f)) {
+            while(<CLIENTS>) {
+                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                if(/^\/(\S+)\/$/) {
+                    # regular expression
+                    push @whitelist_clients, qr{$1}i;
+                }
+                elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
+                    # IP address or part of it
+                    push @whitelist_ips, qr{^$_};
+                }
+                # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
+                elsif(/^\S+$/) {
+                    push @whitelist_clients, qr{\Q$_\E$}i;
+                }
+                else {
+                    warn "WARNING: $f line $.: doesn't look like a hostname\n";
+                }
             }
         }
+        else {
+            warn "WARNING: can't open $f: $!\n" unless $f =~ /\.local$/;
+            # do not warn about .local file: maybe the user just doesn't have one
+        }
+        close(CLIENTS);
     }
-    else {
-        warn "WARNING: can't open whitelist-clients: $self->{postgrey}{whitelist_clients_file}\n";
-    }
-    close(CLIENTS);
     $self->{postgrey}{whitelist_clients} = \@whitelist_clients;
     $self->{postgrey}{whitelist_ips}     = \@whitelist_ips;
+}
 
-    # recipients
+sub read_recipients_whitelists($)
+{
+    my ($self) = @_;
+
     my @whitelist_recipients = ();
-    if(open(RECIPIENTS, $self->{postgrey}{whitelist_recipients_file})) {
-        while(<RECIPIENTS>) {
-            s/^\s+//; s/\s+$//;
-            next if $_ eq '';
-            next if /^#/;
-            my ($user, $domain) = split(/\@/, $_, 2);
-            if(/^\/(\S+)\/$/) {
-                # regular expression
-                push @whitelist_recipients, qr{$1}i;
-            }
-            elsif(!/^[^\s\/]+$/) {
-                warn "WARNING: $self->{postgrey}{whitelist_recipients_file} line $.: doesn't look like an address\n";
-            }
-            # postfix access(5) syntax:
-            elsif(defined $domain and $domain ne '') {
-                # user@domain (match also user+extension@domain)
-                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@\Q$domain\E$}i;
-            }
-            elsif(defined $domain) {
-                # user@
-                push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@}i;
-            }
-            else {
-                # domain ($user is the domain)
-                push @whitelist_recipients, qr{\Q$user\E$}i;
+    for my $f (@{$self->{postgrey}{whitelist_recipients_file}}) {
+        if(open(RECIPIENTS, $f)) {
+            while(<RECIPIENTS>) {
+                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                my ($user, $domain) = split(/\@/, $_, 2);
+                if(/^\/(\S+)\/$/) {
+                    # regular expression
+                    push @whitelist_recipients, qr{$1}i;
+                }
+                elsif(!/^[^\s\/]+$/) {
+                    warn "WARNING: $f line $.: doesn't look like an address\n";
+                }
+                # postfix access(5) syntax:
+                elsif(defined $domain and $domain ne '') {
+                    # user@domain (match also user+extension@domain)
+                    push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@\Q$domain\E$}i;
+                }
+                elsif(defined $domain) {
+                    # user@
+                    push @whitelist_recipients, qr{^\Q$user\E(?:\+[^@]+)?\@}i;
+                }
+                else {
+                    # domain ($user is the domain)
+                    push @whitelist_recipients, qr{\Q$user\E$}i;
+                }
             }
         }
+        else {
+            warn "WARNING: can't open $f: $!\n" unless $f =~ /\.local$/;
+            # do not warn about .local file: maybe the user just doesn't have one
+        }
+        close(RECIPIENTS);
     }
-    else {
-        warn "WARNING: can't open whitelist-recipients: $self->{postgrey}{whitelist_recipients_file}\n";
-    }
-    close(RECIPIENTS);
     $self->{postgrey}{whitelist_recipients} = \@whitelist_recipients;
 }
 
@@ -97,11 +102,12 @@ sub do_sender_substitutions($$)
 {
     my ($self, $addr) = @_;
 
-    # replace numbers in VERP addresses with '#' so that
-    # we don't create a new key for each mail
     my ($user, $domain) = split(/@/, $addr, 2);
     defined $domain or return $addr;
-    # replace numbers with #
+    # strip extension, used sometimes for mailing-list VERP
+    $user =~ s/\+.*//;
+    # replace numbers in VERP addresses with '#' so that
+    # we don't create a new key for each mail
     $user =~ s/\b\d+\b/#/g;
     return "$user\@$domain";
 }
@@ -150,11 +156,15 @@ sub do_maintenance($$)
     {
         $self->log(2, "cleaning up old entries...");
         my $max_age = $self->{postgrey}{max_age};
+        my $retry_window = $self->{postgrey}{retry_window};
         my ($nr_keys_before, $nr_keys_after) = (0,0);
         while (my ($key, $value) = each %$db) {
             $nr_keys_before++;
-            my $last = (split(/,/,$value))[1];
+            my ($first, $last) = split(/,/,$value);
             if($now - $last > $max_age) {
+                delete $db->{$key};
+            }
+            elsif($first == $last and $now - $last > $retry_window) {
                 delete $db->{$key};
             }
             else {
@@ -191,7 +201,25 @@ sub smtpd_access_policy($$)
     );
     my $key    = lc "$client/$sender/$attr->{recipient}";
     my $val    = $db->{$key};
-    my $first  = defined $val ? (split(/,/,$val))[0] : $now;
+    my $first;
+    my $last_was_successful=0;
+    if(defined $val) {
+        my $last;
+        ($first, $last) = split(/,/,$val);
+        # find out if the last time was unsuccessful, so that we can add a header
+        # to say how much had to be waited
+        if($last - $first >= $self->{postgrey}{delay}) {
+            $last_was_successful=1;
+        }
+        # discard stored first-seen if it is the first retrial and
+        # it is beyond the retry_window
+        if($first == $last and $now-$first > $self->{postgrey}{retry_window}) {
+            $first = $now;
+        }
+    }
+    else {
+        $first = $now;
+    }
 
     # update
     $db->{$key}="$first,$now";
@@ -206,10 +234,16 @@ sub smtpd_access_policy($$)
     $self->log(4, "request age ".($now - $first));
     my $diff = $self->{postgrey}{delay} - ($now - $first);
     if ($diff > 0 ) {
-        return "defer_if_permit Greylisted for $diff seconds...";
+        return "DEFER_IF_PERMIT Greylisted for $diff seconds...";
     }
-
-    return 'dunno';
+    elsif($last_was_successful) {
+        # we don't add an header, because probably this message wasn't delayed
+        # at all, since the previous one could pass through already
+        return 'DUNNO';
+    }
+    else {
+        return 'PREPEND X-Postgrey: delayed '.($now-$first).' seconds';
+    }
 }
 
 sub main()
@@ -222,8 +256,9 @@ sub main()
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s',
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'whitelist-clients=s', 'whitelist-recipients=s'
-        ) or exit(1);
+        'lookup-by-subnet', 'whitelist-clients=s@', 'whitelist-recipients=s@',
+        'retry-window=s',
+    ) or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
     if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
@@ -235,6 +270,21 @@ sub main()
     # bind only localhost if no host is specified
     if(defined $opt{inet} and $opt{inet}=~/^\d+$/) {
         $opt{inet} = "localhost:$opt{inet}";
+    }
+
+    # retry window
+    my $retry_window = 24*3600*2; # default: 2 days
+    if(defined $opt{'retry-window'}) {
+        if($opt{'retry-window'} =~ /^(\d+)h$/i) {
+            $retry_window = $opt{'retry-window'} * 3600;
+        }
+        elsif($opt{'retry-window'} =~ /^\d+$/) {
+            $retry_window = $opt{'retry-window'} * 24 * 3600;
+        }
+        else {
+            die "ERROR: --retry-window must be either a number of days or a number followed\n".
+                "       by 'h' for hours ('6h' for example).\n";
+        }
     }
 
     # create Net::Server object and run it
@@ -260,10 +310,13 @@ sub main()
             last_maint       => time,
             last_maint_keys  => 0, # do it on the first night
             lookup_by_subnet => $opt{'lookup-by-subnet'},
-            whitelist_clients_file    => $opt{'whitelist-clients'} ||
-                '/etc/postfix/postgrey_whitelist_clients',
-            whitelist_recipients_file => $opt{'whitelist-recipients'} ||
-                '/etc/postfix/postgrey_whitelist_recipients',
+            retry_window     => $retry_window,
+            whitelist_clients_files    => $opt{'whitelist-clients'} ||
+                [ '/etc/postfix/postgrey_whitelist_clients' ,
+                  '/etc/postfix/postgrey_whitelist_clients.local' ],
+            whitelist_recipients_files => $opt{'whitelist-recipients'} ||
+                [ '/etc/postfix/postgrey_whitelist_recipients',
+                  '/etc/postfix/postgrey_whitelist_clients.local' ],
         },
     }, 'postgrey';
 
@@ -271,12 +324,21 @@ sub main()
     $server->{postgrey}{max_age}*=3600*24;
 
     # read whitelist
-    $server->read_whitelists();
+    $server->read_clients_whitelists();
+    $server->read_recipients_whitelists();
 
     $server->run;
 }
 
 ##### Net::Server::Multiplex methods:
+
+# reload whitelists on HUP
+sub sig_hup {
+    my $self = shift;
+    $self->log(2, "HUP received: reload whitelists...");
+    $self->read_clients_whitelists();
+    $self->read_recipients_whitelists();
+}
 
 sub pre_loop_hook()
 {
@@ -384,9 +446,15 @@ B<postgrey> [I<options>...]
      --delay=N          greylist for N seconds (default: 300)
      --max-age=N        delete entries older than N days since the last time
                         that they have been seen (default: 14)
+     --retry-window=N   allow only N days for the first retrial (default: 2)
+                        append 'h' if you want to specify it in hours
      --lookup-by-subnet strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
+
+ Note that the --whitelist-x options can be specified multiple times, and that
+ the default is to read the file written above + the same file with .local
+ appended.
 
 =head1 DESCRIPTION
 
@@ -437,8 +505,19 @@ greylisting.
 
 =head2 Whitelists
 
+Whitelists allow you to specify client addresses or recipient address, for
+which no greylisting should be done. Per default postgrey will read the
+following files:
+
+ /etc/postfix/postgrey_whitelist_clients
+ /etc/postfix/postgrey_whitelist_clients.local
+ /etc/postfix/postgrey_whitelist_recipients
+ /etc/postfix/postgrey_whitelist_recipients.local
+
+You can specify alternative paths with the --whitelist-x options.
+
 Postgrey whitelists follow similar syntax rules as Postfix access tables.
-The following can be specified for recipiend addresses:
+The following can be specified for B<recipient addresses>:
 
 =over 10
 
@@ -453,6 +532,25 @@ C<name@.*> and extended addresses C<name+blabla@.*>.
 =item name@domain.addr
 
 C<name@domain.addr> and extended addresses.
+
+=item /regexp/
+
+anything that matches C<regexp> (the full address is matched).
+
+=back
+
+The following can be specified for B<client addresses>:
+
+=over 10
+
+=item domain.addr
+
+C<domain.addr> domain and subdomains.
+
+=item IP1.IP2.IP3.IP4
+
+IP address IP1.IP2.IP3.IP4. You can also leave off one number, in which case
+only the first specified numbers will be checked.
 
 =item /regexp/
 

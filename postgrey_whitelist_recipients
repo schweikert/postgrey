@@ -3,4 +3,4 @@
 # put this file in /etc/postfix or specify its path
 # with --whitelist-recipients=xxx
 
-# i_want_spam@ee.ethz.ch
+postmaster@

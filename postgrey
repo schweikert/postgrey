@@ -359,7 +359,6 @@ sub main()
 
     # do not output any localized texts!
     setlocale(LC_ALL, 'C');
-    $ENV{LC_ALL}='C';
 
     # parse options
     my %opt = ();

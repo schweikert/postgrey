@@ -183,10 +183,9 @@ sub do_maintenance($$)
 sub is_new_instance($$)
 {
     my ($self, $inst) = @_;
-    # we keep a list of the last 10 "instances", which identify unique messages
+    # we keep a list of the last 20 "instances", which identify unique messages
     # so that for example we only put one X-Greylist header per message.
-    $self->{postgrey}{instances} = [ undef, undef, undef, undef, undef,
-                                     undef, undef, undef, undef, undef ]
+    $self->{postgrey}{instances} = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
         unless defined $self->{postgrey}{instances};
 
     my $i = $self->{postgrey}{instances};
@@ -196,7 +195,6 @@ sub is_new_instance($$)
     unshift @$i, $inst;
     pop @$i;
 
-    $self->log(2, "inst array = ".join(', ', @$i));
     return 1;
 }
 
@@ -295,7 +293,7 @@ sub smtpd_access_policy($$)
         if($self->is_new_instance($attr->{instance})) {
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);
             return 'PREPEND X-Greylist: delayed '.($now-$first).
-                " seconds by Postgrey $VERSION at $hostname; $date";
+                " seconds by postgrey-$VERSION at $hostname; $date";
         }
     }
 }

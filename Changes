@@ -14,6 +14,7 @@
   - replaced X-Postgrey header with a X-Greylist header which is more similar
     to what greylist-milter does (Stephen Gildea)
   - implemented --greylist-action (Stephen Gildea)
+  - updated postgreyreport (Tom Baker)
   - update whitelist
 
 * 2004-07-05: version 1.13

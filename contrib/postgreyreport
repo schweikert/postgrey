@@ -9,7 +9,8 @@ use BerkeleyDB;
 use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Daemonize qw( get_uid get_gid set_uid set_gid );
 use Pod::Usage;
-my $VERSION='1.11.1 (20040701)';
+#use Net::RBLClient;
+my $VERSION='1.14.1 (20040711)';
 
 # used in maillog processing
 my $RE_revdns_ip   	= qr/ ([^\[\s]+)\[(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]/;	# ptr[1.2.3.4]
@@ -17,6 +18,7 @@ my $RE_reject 		= qr/reject: /;
 my $RE_triplet 		= qr/$RE_revdns_ip: 450 .+from=<([^>]+)> to=<([^>]+)>/;
 
 my $dns; my %dns_cache; 		# used for --check_sender 
+my $rbl = undef;			# Net::RBLClient object
 select((select(STDOUT), $| = 1)[0]); 	# Unbuffer standard output.
 
 # default options, override via command line
@@ -31,6 +33,10 @@ my %opt = (
 	seperate_by_subnet	=> '',			# if not blank output this string for every new /24
 	seperate_by_ip	   	=> '',			# if not blank output this string for every new IP
 	single_line	   	=> 1,			# output everything on a single line? (grouping enabled if false )
+	
+	skip_dnsbl		=> [],			# list of DNSBL servers to check and skip reporting for
+	skip_clients		=> [],			# files of clients to skip reporting	
+	match_clients		=> [], 			# files of ONLY clients to report on
 
 	v 			=> 0,			# verbose? used mainly for script debugging
 	debug_db		=> 0,			# output time() values from btree db
@@ -44,17 +50,25 @@ sub main
 		'help|h', 'version', 'man',
 		'delay=s', 'user|u', 'dbdir=s', 
 		'debug_db', 'debug_re=s', 'v+',
-		'return_string=s',
+		'return_string|greylist-text=s',
 		'show_tries', 
 		'check_sender=s',
 		'seperate_by_subnet=s', 'seperate_by_ip=s',  
 		'single_line!',
+		'skip_dnsbl=s@','skip_clients=s@', 'match_clients=s@',
 		) or exit(1);
 	if($opt{help})     { pod2usage(1) }
 	if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
 	if ($opt{version})	{ print "postgreyreport $VERSION\n"; exit(0) }
 
+	if (scalar(@{$opt{skip_dnsbl}}) > 0) {
+		require Net::RBLClient;
+		$rbl = Net::RBLClient->new ( lists => $opt{skip_dnsbl} );
+	}
+
+
 	setup_debug();		 # display key/value pairs from db
+	read_client_files();
 	
 	postgrey_fatal_report(); # do the work
 }
@@ -91,6 +105,7 @@ sub postgrey_fatal_report()
 	foreach my $key (@greyfatal)
 	{
 		my ($ip,$sender,$recipient) = split(/\//,$key);		# seperate the triplet
+		
 		my $revdns = $triplets{$key}{revdns};			# we saved revdns during maillog parse, so we dont have to look it up
 
 		# --check_sender=mx,mx/24,a,a/24
@@ -163,8 +178,9 @@ sub postgrey_fatal_report()
 sub find_and_sort_fatal
 {
 	my ($db, $triplets) = @_;
+	
 	# while(<>): STDIN is maillog.0, looking at reject: 4xx greylist entries and remembering all triplets
-	while (<>)
+	MAILLOG: while (<>)
 	{
 		next unless (/$RE_reject/o);				# only look at reject: lines
 		next unless (/$opt{return_string}/o);			# only look at greylisted lines
@@ -174,12 +190,8 @@ sub find_and_sort_fatal
 		my $subnet = do_client_substitutions($ipaddr,$revdns);	# 1.2.3.0
 		my $key    = lc "$ipaddr/$sender/$recipient";		# postgrey key
 		my $subkey = lc "$subnet/$sender/$recipient";		# subnet key 1.2.3.0/sender/recipient
-		$triplets->{$key}{counter}++;				# increase counter for this triplet
-		$triplets->{$key}{revdns}=$revdns;			# save its ptr for later use
-		$triplets->{$key}{ipaddr}=$ipaddr;			# save IP in easy to access form
-		$triplets->{$key}{subnet}=$subnet;			# save subnet in easy to access form
-		$triplets->{$key}{subkey}=$subkey;			# save key in subnet form
-		
+
+		# if we are wanting to dump first,last out of the db do it before we determine if its fatal
 		if ( is_debug_host($revdns) )
 		{
 			foreach my $testkey ( @{[$key,$subkey]} )
@@ -189,46 +201,37 @@ sub find_and_sort_fatal
 				print "$testkey : $db->{$testkey} = " .$tdiff . "s \n";	
 			}
 		}
+	
+		next MAILLOG unless is_fatal_triplet($db, $key, $subkey);	# check db, only remember fatals
+
+		# if --match_clients was specified on command line then move on to the next line unless a match is found
+		if ( scalar(@{$opt{match_clients}}) > 0 ) {
+			next unless (	find_in_array($ipaddr, $opt{MATCH_CLIENT_IPS}) or 
+					find_in_array($revdns, $opt{MATCH_CLIENT_PTR})     );
+		}
+
+		next if (	find_in_array($ipaddr, $opt{SKIP_CLIENT_IPS}) or
+				find_in_array($revdns, $opt{SKIP_CLIENT_PTR})	  );			
+
+		if ( defined $rbl ) {
+			$rbl->lookup($ipaddr);
+			my @listed = $rbl->listed_by;
+			next if ( scalar(@listed) > 0 );
+			
+		}
+
+		$triplets->{$key}{counter}++;				# increase counter for this triplet
+		$triplets->{$key}{revdns}=$revdns;			# save its ptr for later use
+		$triplets->{$key}{ipaddr}=$ipaddr;			# save IP in easy to access form
+		$triplets->{$key}{subnet}=$subnet;			# save subnet in easy to access form
+		$triplets->{$key}{subkey}=$subkey;			# save key in subnet form
+		
 		
 	}
 
 	die "Debugging DB active, report shutdown" if ($opt{debug_db}); # don't do anything other than spit out key pairs and stop
 
-	my @greykeys = keys %{ $triplets }; 				# create an array containing all triplets in form: ip/sender/recipient
-	my @greyfatal;							# an array that will contain fatal-triplets as we figure them out
-	
-	# foreach: loop through all triplets, determining if it was a fatal triplet or not. remember fatals
-	foreach my $key (@greykeys) 
-	{
-		my ($lapsed_ip, $lapsed_subnet) = (undef,undef);
-		
-		# try lookup by key
-		if ( $db->{$key} =~ /,/ )
-		{
-			my ($tfirst,$tlast) = split(/,/,$db->{$key});		# time_first_seen,time_last_seen
-			$lapsed_ip = $tlast - $tfirst;				# difference is time lapsed
-		}
-		
-		# try subnet lookup	
-		if ( $db->{$triplets->{$key}{subkey}} =~ /,/ )
-		{
-			my ($tfirst,$tlast) = split(/,/,$db->{$triplets->{$key}{subkey}});		# time_first_seen,time_last_seen
-			$lapsed_subnet = $tlast - $tfirst;
-		}
-		
-		if (   
-		      ( defined $lapsed_ip or defined $lapsed_subnet )  
-			and
-		    (!( ($lapsed_ip >= $opt{delay} ) or ($lapsed_subnet >= $opt{delay}) ) )   
-		   )    
-		{
-			push (@greyfatal, $key); 	# if lapsed time less than --delay, then it was a fatal triplet
-		} elsif (( ! defined $lapsed_ip ) and ( ! defined $lapsed_subnet ))
-		{
-			push (@greyfatal, $key); 	# if neither is found in the db it must have been removed.
-		}
-	}
-	
+	my @greyfatal = keys %{ $triplets }; 				# create an array containing all triplets in form: ip/sender/recipient
 	# sort fatal triplets by IP address
 	@greyfatal = sort {
 		    pack('C4' => $a =~
@@ -241,6 +244,53 @@ sub find_and_sort_fatal
 	return @greyfatal;			
 	
 }
+
+sub find_in_array($$)
+{
+	my ($var, $patterns) = @_;
+	for my $w (@{$patterns}) {
+		return 1 if $var =~ $w;	
+	}
+	return 0;
+}
+
+
+sub is_fatal_triplet($$$)
+{
+	my ($db, $key, $subkey) = @_;
+	
+	my ($lapsed_ip, $lapsed_subnet) = (undef,undef);
+	
+	# try lookup by key
+	if ( $db->{$key} =~ /,/ )
+	{
+		my ($tfirst,$tlast) = split(/,/,$db->{$key});		# time_first_seen,time_last_seen
+		$lapsed_ip = $tlast - $tfirst;				# difference is time lapsed
+	}
+	
+	# try subnet lookup	
+	if ( $db->{$subkey} =~ /,/ )
+	{
+		my ($tfirst,$tlast) = split(/,/,$db->{$subkey});		# time_first_seen,time_last_seen
+		$lapsed_subnet = $tlast - $tfirst;
+	}
+	
+	if (   
+	      ( defined $lapsed_ip or defined $lapsed_subnet )  
+		and
+	    (!( ($lapsed_ip >= $opt{delay} ) or ($lapsed_subnet >= $opt{delay}) ) )   
+	   )    
+	{
+		#push (@greyfatal, $key); 	# if lapsed time less than --delay, then it was a fatal triplet
+		return 1;
+	} elsif (( ! defined $lapsed_ip ) and ( ! defined $lapsed_subnet ))
+	{
+		#push (@greyfatal, $key); 	# if neither is found in the db it must have been removed.
+		return 1;
+	}
+	return 0;
+}	
+
 
 ###########################################################################
 # check_sender_mx(sender, ip, subnet) # subnet='' or '/24'
@@ -385,11 +435,13 @@ sub setup_dbm
 sub do_sender_substitutions($)
 {
     my ($addr) = @_;
-    # replace numbers in VERP addresses with '#' so that
-    # we don't create a new key for each mail
+
     my ($user, $domain) = split(/@/, $addr, 2);
     defined $domain or return $addr;
-    # replace numbers with #
+    # strip extension, used sometimes for mailing-list VERP
+    $user =~ s/\+.*//;
+    # replace numbers in VERP addresses with '#' so that
+    # we don't create a new key for each mail
     $user =~ s/\b\d+\b/#/g;
     return "$user\@$domain";
 }
@@ -400,13 +452,77 @@ sub do_client_substitutions($$)
     	my ($ip, $revdns) = @_;
 
 	# --lookup-by-subnet:
-	return $ip if $revdns eq 'unknown';
-	my @ip=split(/\./, $ip);
-	return $ip unless defined $ip[3];
-	# skip if it contains the last two IP numbers in the hostname
-	# (we assume it is a pool of dialup addresses of a provider)
-	return $ip  if $revdns =~ /\b$ip[2]\b/ and $revdns =~ /\b$ip[3]\b/;
-	return join('.', @ip[0..2], '0');
+
+    return ($ip, undef) if $revdns eq 'unknown';
+    my @ip=split(/\./, $ip);
+    return ($ip, undef) unless defined $ip[3];
+    # skip if it contains the last two IP numbers in the hostname
+    # (we assume it is a pool of dialup addresses of a provider)
+    return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
+    return (join('.', @ip[0..2], '0'), $ip[3]);
+
+}
+
+
+## used code from postgrey for read_client_whitelists() to import client files
+sub read_client_files()
+{
+	my @skip_client_ips;
+	my @skip_client_ptr;
+	my @match_client_ips;
+	my @match_client_ptr;
+	
+	for my $f (@{$opt{'skip_clients'}}) {
+          if(open(CLIENTS, $f)) {
+            while(<CLIENTS>) {
+                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                if(/^\/(\S+)\/$/) {
+                    # regular expression
+                    push @skip_client_ptr, qr{$1}i;
+                }
+                elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
+                    # IP address or part of it
+                    push @skip_client_ips, qr{^$_};
+                }
+                # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
+                elsif(/^\S+$/) {
+                    push @skip_client_ptr, qr{\Q$_\E$}i;
+                }
+                else {
+                    warn "WARNING: $f line $.: doesn't look like a hostname\n";
+                }
+            }
+          }  
+	}
+	$opt{SKIP_CLIENT_PTR} = \@skip_client_ptr;
+	$opt{SKIP_CLIENT_IPS} = \@skip_client_ips;
+
+	for my $f (@{$opt{'match_clients'}}) {
+          if(open(CLIENTS, $f)) {
+            while(<CLIENTS>) {
+                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                if(/^\/(\S+)\/$/) {
+                    # regular expression
+                    push @match_client_ptr, qr{$1}i;
+                }
+                elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
+                    # IP address or part of it
+                    push @match_client_ips, qr{^$_};
+                }
+                # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
+                elsif(/^\S+$/) {
+                    push @match_client_ptr, qr{\Q$_\E$}i;
+                }
+                else {
+                    warn "WARNING: $f line $.: doesn't look like a hostname\n";
+                }
+            }
+          }  
+	}
+	$opt{MATCH_CLIENT_PTR} = \@match_client_ptr;
+	$opt{MATCH_CLIENT_IPS} = \@match_client_ips;
+	
+	
 }
 
 
@@ -455,17 +571,29 @@ B<postgreyreport> [I<options>...]
 
  -h, --help                   display this help and exit
      --version		      display version and exit
+
      --user=USER              run as USER (default: postgrey)
      --dbdir=PATH             find db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N                report triplets that did not try again after N seconds (default: 300)
-     --return_string=TXT      text to match on for greylist maillog lines
-     --show_tries	      display the number of attempts failed triplets made 
+     --greylist-text=TXT      text to match on for greylist maillog lines
+
+     --skip_dnsbl=RBL	      RBL server to query and skip reporting for any listed hosts (SLOW!!)
+     --skip_clients=FILE      PTR or IP or REGEXP of clients to skip in report        
+     --match_clients=FILE     *ONLY* report if fatal *AND* PTR/IP of client matches
+     
+     --show_tries	      display the number of attempts failed triplets made in first column
+
+     --nosingle_line	      display sender/recipients grouped by ptr - ip
      --seperate_by_subnet=TXT display TXT for every new /24 (ex: "=================\n" )
      --seperate_by_ip=TXT     display TXT for every new IP  (ex: "\n")
      --check_sender=LIST      one or more of: mx,mx/24,a,a/24
                               does DNS/A lookups for sender @domain and compares sending IP
                               if match displays "MX" "A" or "MX/24" or "A/24" depending on LIST
-     --nosingle_line	      display sender/recipients grouped by ptr - ip
+  
+   Note that --(skip|match)_clients can be specified multiple times and there are no default files.
+   Same rules apply as postgrey's --whitelist-clients, see postgrey doc for more info.
+
+   --skip_dnsbl can also be specified multiple times to query multiple DNSBL servers.
 
 =head1 DESCRIPTION
 
@@ -528,17 +656,28 @@ smtpout.mac.com       17.250.248.88
 
 =head1 HISTORY
 
+
+B<1.14.1  20040712>
+
+=over 4
+
+  Changed --return-string to --greylist-text to match postgrey
+  new Option: --skip_clients=FILE
+  new Option: --match_clients=FILE
+  new Option: --skip_dnsbl=RBL.DNS.NAME
+  All 3 of the new options can be specified multiple times.
+  Updated do_*_subsititions again to match postgrey
+
+=back
+
 B<1.11.1 20040701>
 
 =over 4
 
-Missing keys from DB are considered fatal triplets and included in report
-
-Changed --delay testing from "greater than" to "greater than or equal to"
-
-Fixed --help and --man switches
-
-Removed setuid Notice
+  missing keys from DB are considered fatal triplets and included in report
+  Changed --delay testing from "greater than" to "greater than or equal to"
+  Fixed --help and --man switches
+  Removed setuid Notice
 
 =back
 
@@ -546,11 +685,10 @@ B<1.6.4  20040618>
 
 =over 4
 
-Initial Public Version (postgrey/contrib)
+  Initial Public Version (postgrey/contrib)
 
 =back
               
-
 =head1 AUTHOR
 
 S<Tom Baker E<lt>tbaker@bakerfl.orgE<gt>>

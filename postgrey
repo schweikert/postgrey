@@ -15,7 +15,7 @@ use Net::Server::Multiplex;
 use BerkeleyDB;
 use Fcntl ':flock'; # import LOCK_* constants
 use Sys::Hostname;
-use POSIX qw(strftime);
+use POSIX qw(strftime setlocale LC_ALL);
 
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
@@ -358,6 +358,7 @@ sub main()
     my @ARGV_saved = @ARGV;
 
     # do not output any localized texts!
+    setlocale(LC_ALL, 'C');
     $ENV{LC_ALL}='C';
 
     # parse options

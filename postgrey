@@ -186,8 +186,8 @@ sub pre_loop_hook()
 
     # be sure to put in syslog any warnings / fatal errors
     if($self->{server}{log_file} eq 'Sys::Syslog') {
-        $SIG{__WARN__} = sub { Sys::Syslog::syslog(1, "warning: $_[0]") };
-        $SIG{__DIE__}  = sub { Sys::Syslog::syslog(1, "fatal: $_[0]"); die @_; };
+        $SIG{__WARN__} = sub { Sys::Syslog::syslog('warn', "warning: $_[0]") };
+        $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', "fatal: $_[0]"); die @_; };
     }
 
     # open database with transactions, logging and auto-commit to make it as

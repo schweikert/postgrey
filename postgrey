@@ -18,10 +18,10 @@ use BerkeleyDB;
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-'$Revision: 3 $ ' =~ /Revision: (\S*)/;
+'$Revision: 4 $ ' =~ /Revision: (\S*)/;
 my $Revision = $1;
 
-# LOCAL CHANGES HERE: {{{
+# local policy about what users want greylisting:
 sub policing_is_wanted($)
 {
     my ($attr) = @_;
@@ -47,7 +47,6 @@ sub policing_is_wanted($)
     return 1 if $greylist_users{$attr->{recipient}};
     return 0;
 }
-# }}}
 
 #Copyright raeburn at raeburn.org
 #Retrieved from: http://lists.puremagic.com/pipermail/greylist-users/2003-October/000276.html
@@ -76,6 +75,19 @@ sub do_verp_substitutions($)
     return "$localpart\@$hostpart";
 }
 
+sub do_maintenance($$)
+{
+    my ($self, $now) = @_;
+    my $db  = $self->{postgrey}{db};
+
+    for my $key (keys %$db) {
+        my $last = (split(/,/,$db->{$key}))[1];
+        if($now - $last > $self->{postgrey}{max_age}) {
+            delete $db->{$key};
+        }
+    }
+}
+
 # main routine: based on attributes specified as argument, return policy decision
 sub smtpd_access_policy($$)
 {
@@ -91,6 +103,12 @@ sub smtpd_access_policy($$)
 
     # update
     $db->{$key}="$first,$now";
+
+    # do maintenance if one hour has passed since the last one
+    if($now-$self->{postgrey}{last_maint} > 3600) {
+        $self->{postgrey}{last_maint} = $now;
+        $self->do_maintenance($now);
+    }
 
     # restrict policing to users that want it
     policing_is_wanted($attr) or return 'dunno';
@@ -113,7 +131,7 @@ sub main()
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
         'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'dbdir=s',
-        'delay=i',) or exit(1);
+        'delay=i', 'max-age=i') or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
     if($opt{version})  { print "template_tool $Revision\n"; exit(0) }
@@ -143,10 +161,15 @@ sub main()
             syslog_logsock => 'inet',
         },
         postgrey => {
-            delay          => $opt{delay} || 600,
-            dbdir          => $opt{dbdir} || '/var/spool/postfix/postgrey',
+            delay          => $opt{delay}        || 600,
+            dbdir          => $opt{dbdir}        || '/var/spool/postfix/postgrey',
+            max_age        => $opt{'max-age'}    || 14,
+            last_maint     => time(),
         },
     }, 'postgrey';
+
+    # max_age is in days
+    $server->{postgrey}{max_age}*=3600*24;
 
     $server->run;
 }
@@ -234,6 +257,8 @@ B<postgrey> [I<options>...]
      --user=USER          run as USER (default: postgrey)
      --dbdir=PATH         put db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N            greylist for N seconds (default: 600)
+     --max-age=N          delete entries older than N days since the last time that
+                          they have been seen
 
 =head1 DESCRIPTION
 

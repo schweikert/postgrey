@@ -677,6 +677,25 @@ anything that matches C<regexp> (the full address is matched).
 
 =back
 
+=head2 Auto-whitelisting clients
+
+With the option --auto-whitelist-clients a client IP address will be
+automatically whitelisted if the following conditions are met:
+
+=over 4
+
+=item *
+
+At least 5 successfull attempts of delivering a mail (after greylisting was
+done). That number can be changed by specifying a number after the
+--auto-whitelist-clients argument.
+
+=item *
+
+Last seen before --max-age (35 days)
+
+=back
+
 =head2 Greylist Action
 
 To set the action to be returned to postfix when a message fails

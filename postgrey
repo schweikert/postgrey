@@ -264,7 +264,7 @@ sub smtpd_access_policy($$)
     if ($diff > 0 ) {
         my $msg = $self->{postgrey}{greylist_text};
         $msg =~ s/\%s/$diff/;
-        return $self->{postgrey}{greylist_action},' ',$msg;
+        return "$self->{postgrey}{greylist_action} $msg";
     }
     elsif($last_was_successful) {
         # we don't add an header, because probably this message wasn't delayed
@@ -347,7 +347,7 @@ sub main()
             lookup_by_host   => $opt{'lookup-by-host'},
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
-            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %d seconds',
+            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds',
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],
@@ -486,7 +486,7 @@ B<postgrey> [I<options>...]
                          append 'h' if you want to specify it in hours
      --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)
      --greylist-text=TXT response when a mail is greylisted
-                         (default: Greylisted for %d seconds)
+                         (default: Greylisted for %s seconds)
      --lookup-by-subnet  strip the last 8 bits from IP addresses (default)
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients

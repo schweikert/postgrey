@@ -14,6 +14,7 @@ use Pod::Usage;
 use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Multiplex;
 use BerkeleyDB;
+use Fcntl ':flock'; # import LOCK_* constants
 
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
@@ -179,13 +180,16 @@ sub pre_loop_hook()
 {
     my ($self) = @_;
 
-    # open database with transactions, locking and auto-commit to make it as
-    # safe as possible. Note that locking is not required if only one process is running
-    # (as it should), but I put it anyway so that the database doesn't get corrupt if
-    # you make the mistake of running two instances with the same db file
+    # ensure that only one instance of postgrey is running
+    my $lock = "$self->{server}{dbdir}/postgrey.lock";
+    open(LOCK, ">>$lock") or die "ERROR: can't open lock file: $lock\n";
+    flock(LOCK, LOCK_EX|LOCK_NB) or die "ERROR: locked: $lock\n";
+
+    # open database with transactions, logging and auto-commit to make it as
+    # safe as possible. Note that locking is not required since only one process is running
     my $env = BerkeleyDB::Env->new(
         -Home     => $self->{server}{dbdir},
-        -Flags    => DB_CREATE|DB_RECOVER|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG|DB_INIT_LOCK,
+        -Flags    => DB_CREATE|DB_RECOVER|DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
         -SetFlags => DB_AUTO_COMMIT|DB_LOG_AUTOREMOVE|DB_TXN_NOSYNC,
     ) or die "ERROR: can't create DB environment: $!\n";
 

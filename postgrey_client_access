@@ -1,0 +1,24 @@
+# based on: http://www.greylisting.org/whitelisting.html
+
+# Linux kernel (unique sender)
+vger.kernel.org		OK
+# Southwest Airlines (unique sender, no retry)
+southwest.com		OK
+# AOL (common pool)
+mx.aol.com		OK
+# collab.net (unique sender per attempt)
+collab.net		OK
+# Yahoo Groups servers (common pool, no retry)
+scd.yahoo.com		OK
+# isp.belgacom.be (wierd retry pattern)
+isp.belgacom.be		OK
+# Ameritrade (no retry)
+ameritradeinfo.com	OK
+# SecurityFocus.com (unique sender per attempt)
+securityfocus.com	OK
+# Prodigy - broken software that retries continually (no delay)
+prodigy.com		OK
+# Amazon.com
+amazon.com		OK
+# Mysql.com (unique sender)
+mysql.com		OK

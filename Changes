@@ -6,7 +6,7 @@
   - implemented --lookup-by-subnet (Tom Baker)
   - use 'unix' syslog socket on non-solaris platforms (Matt Egan)
   - implemented whitelist support from postgrey itself (instead of using
-    postfix restrictions)
+    postfix restrictions: easier to setup)
   - included contrib/postgrey-report by Tom Baker
 
 * 2004-06-11: version 1.6

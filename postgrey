@@ -19,35 +19,6 @@ use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
 my $VERSION = '1.0';
-# local start
-sub policing_is_wanted($)
-{
-    my ($attr) = @_;
-
-    my %greylist_domains = (
-        'list.ee.ethz.ch' => 1,
-        'iis.ee.ethz.ch' => 1,
-        'afg.ethz.ch' => 1,
-    );
-
-    my %greylist_users = (
-        'dws@ee.ethz.ch' => 1,
-        'oetiker@ee.ethz.ch' => 1,
-        'zaucker@ee.ethz.ch' => 1,
-        'fritz.zaucker@ee.ethz.ch' => 1,
-        'moetiker@ee.ethz.ch' => 1,
-        'thaler@ee.ethz.ch' => 1,
-        'isg@ee.ethz.ch' => 1,
-        'root@ee.ethz.ch' => 1,
-        'unix-admin@ee.ethz.ch' => 1,
-        'afg@ee.ethz.ch' => 1,
-    );
-
-    return 1 if $attr->{recipient}=~/@(\S+)$/ and $greylist_domains{$1};
-    return 1 if $greylist_users{$attr->{recipient}};
-    return 0;
-}
-# local end
 
 #Copied from http://lists.puremagic.com/pipermail/greylist-users/2003-October/000276.html
 #Author: raeburn at raeburn.org
@@ -118,10 +89,6 @@ sub smtpd_access_policy($$)
         $self->{postgrey}{last_maint} = $now;
         $self->do_maintenance($now);
     }
-# local start
-    # restrict policing to users that want it
-    policing_is_wanted($attr) or return 'dunno';
-# local end
 
     # decide
     $self->log(4, "request age ".($now - $first));

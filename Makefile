@@ -1,4 +1,4 @@
-VERSION = 1.4
+VERSION = 1.5
 
 tarball:
 	mkdir -p postgrey-$(VERSION)

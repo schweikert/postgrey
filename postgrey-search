@@ -1,0 +1,80 @@
+#!/usr/sepp/bin/perl-5.8.4 -w
+
+use lib '/usr/isgtc/lib/perl';
+use Getopt::Long;
+
+my $dbdir = '/var/spool/postfix/postgrey';
+
+use BerkeleyDB;
+use Socket;
+use ISG::Util qw(time2iso);
+
+my %resolv_cache = ();
+
+sub resolv($) {
+    my $host = shift;
+    my $iaddr;
+    my $name; 
+    $iaddr = inet_aton($host);
+    if (not defined $resolv_cache{$host}) {
+	$name = gethostbyaddr($iaddr, AF_INET) or $name = $host;
+	$name =~ s/$opt{'remove-name'}$//o if defined $opt{'remove-name'};
+	$resolv_cache{$host} = $name;
+    }
+    return $resolv_cache{$host};
+}
+
+sub dbopen($)
+{
+    my ($dbdir) = @_;
+    my %db;
+
+    my $dbenv = BerkeleyDB::Env->new(
+	-Home     => $dbdir,
+	-Flags    => DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
+    ) or die "ERROR: can't open DB environment: $!\n";
+
+    tie(%db, 'BerkeleyDB::Btree',
+	-Filename => "postgrey.db",
+	-Flags    => DB_RDONLY,
+	-Env      => $dbenv,
+    ) or die "ERROR: can't open database $dbdir/postgrey.db: $!\n";
+
+    return \%db;
+}
+
+sub main()
+{
+    # parse options
+    my %opt = ();
+    GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
+        'dbdir=s'
+        ) or exit(1);
+    if($opt{help})     { pod2usage(1) }
+    if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
+    if($opt{version})  { print "postgrey-search $VERSION\n"; exit(0) }
+    if($opt{noaction}) { die "ERROR: don't know how to \"no-action\".\n" }
+
+    my $db = dbopen($dbdir);
+    my $match_to = pop @ARGV;
+    defined $match_to or die "ERROR: missing argument: to-regexp\n"; 
+    $match_to = qr{$match_to};
+
+    # header
+    printf "%-19s %-40s %s\n", 'Date', 'Host', 'Sender';
+    printf "%-19s %-40s %s\n", '-'x19, '-'x40, '-'x29;
+
+    # go through the database
+    while (my ($key, $value) = each %$db) {
+	my ($f,$l) = split(/,/,$value);
+	my ($ip,$from,$to) = split(/\//,$key);
+	if($f == $l and $to =~ $match_to) {
+	    my $host = resolv($ip);
+	    printf "%-19s %-40s %s\n", time2iso($f), resolv($ip), $from;
+	}
+    }
+}
+
+main;
+
+# vim: sw=4

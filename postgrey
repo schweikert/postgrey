@@ -153,17 +153,18 @@ sub main()
     # create Net::Server object and run it
     my $server = bless {
         server => {
-            commandline    => [ $0, @ARGV_saved ],
-            delay          => $opt{delay} || 600,
-            port           => [ $opt{inet} ? $opt{inet} : $opt{unix} ],
-            proto          => $opt{inet} ? 'tcp' : 'unix',
-            user           => $opt{user} || 'postgrey',
-            dbdir          => $opt{dbdir} || '/var/spool/postfix/postgrey',
-            setsid         => $opt{daemonize} ? 1 : undef,
-            log_level      => $opt{verbose} ? 1 : 3,
-            log_facilty    => 'mail',
-            log_file       => $opt{daemonize} ? 'Sys::Syslog' : undef,
-            syslog_logsock => 'inet',
+            commandline     => [ $0, @ARGV_saved ],
+            delay           => $opt{delay} || 600,
+            port            => [ $opt{inet} ? $opt{inet} : $opt{unix} ],
+            proto           => $opt{inet} ? 'tcp' : 'unix',
+            user            => $opt{user} || 'postgrey',
+            dbdir           => $opt{dbdir} || '/var/spool/postfix/postgrey',
+            setsid          => $opt{daemonize} ? 1 : undef,
+            log_level       => $opt{verbose} ? 4 : 2,
+            log_file        => $opt{daemonize} ? 'Sys::Syslog' : undef,
+            syslog_facility => 'mail',
+            syslog_logsock  => 'inet',
+            syslog_ident    => 'postgrey',
         },
         postgrey => {
             delay          => $opt{delay}     || 600,
@@ -184,6 +185,9 @@ sub main()
 sub pre_loop_hook()
 {
     my ($self) = @_;
+
+    # write files with mode 600
+    umask 0077;
 
     # ensure that only one instance of postgrey is running
     my $lock = "$self->{server}{dbdir}/postgrey.lock";
@@ -223,17 +227,17 @@ sub mux_input()
         elsif($in eq '') {
             defined $attr->{request} or $attr->{request}='';
             if($attr->{request} ne 'smtpd_access_policy') {
-                $self->{net_server}->log(1, "unrecognized request type: '$attr->{request}'");
+                $self->{net_server}->log(2, "unrecognized request type: '$attr->{request}'");
             }
             else {
                 # decide
                 my $action = $self->{net_server}->smtpd_access_policy($attr);
                 # debug
-                if($self->{net_server}{server}{log_level}>3) {
+                if($self->{net_server}{server}{log_level}>=4) {
                     my $a = 'request: ';
                     $a .= join(' ', map {"$_=$attr->{$_}"} (sort keys %$attr));
                     $a .= " action=$action";
-                    $self->{net_server}->log(2, $a);
+                    $self->{net_server}->log(4, $a);
                 }
                 # give answer
                 print $fh "action=$action\n\n";
@@ -241,7 +245,7 @@ sub mux_input()
             $self->{postgrey_attr} = {};
         }
         else {
-             $self->{net_server}->log(1, "ignoring garbage: <".substr($in, 0, 100).">");
+             $self->{net_server}->log(2, "ignoring garbage: <".substr($in, 0, 100).">");
         }
     }
 }
@@ -258,18 +262,18 @@ postgrey - Postfix Greylist Policy Server
 
 B<postgrey> [I<options>...]
 
- -h, --help               display this help and exit
-     --version            output version information and exit
- -v, --verbose            increase verbosity level
+ -h, --help             display this help and exit
+     --version          output version information and exit
+ -v, --verbose          increase verbosity level
 
- -u, --unix=PATH          listen on unix socket PATH
- -i, --inet=[HOST:]PORT   listen on PORT, localhost if HOST is not specified
- -d, --daemonize          run in the background
-     --user=USER          run as USER (default: postgrey)
-     --dbdir=PATH         put db files in PATH (default: /var/spool/postfix/postgrey)
-     --delay=N            greylist for N seconds (default: 600)
-     --max-age=N          delete entries older than N days since the last time that
-                          they have been seen
+ -u, --unix=PATH        listen on unix socket PATH
+ -i, --inet=[HOST:]PORT listen on PORT, localhost if HOST is not specified
+ -d, --daemonize        run in the background
+     --user=USER        run as USER (default: postgrey)
+     --dbdir=PATH       put db files in PATH (default: /var/spool/postfix/postgrey)
+     --delay=N          greylist for N seconds (default: 600)
+     --max-age=N        delete entries older than N days since the last time
+                        that they have been seen (default: 14)
 
 =head1 DESCRIPTION
 
@@ -305,7 +309,7 @@ Put something like this in /etc/main.cf:
                ...
                reject_unauth_destination
                check_client_access    hash:/etc/postfix/postgrey_client_access
-               check_recipient_access hash:/etc/postfix/postgrey_recipent_access
+               check_recipient_access hash:/etc/postfix/postgrey_recipient_access
                check_policy_service inet:127.0.0.1:10023
 
 =item *
@@ -316,7 +320,7 @@ the standard) or use complicated unique return addresses.
 
 =item *
 
-Put in /etc/postfix/postgrey_recipent_access users that do not want greylisting
+Put in /etc/postfix/postgrey_recipient_access users that do not want greylisting
 like this:
 
   i_like_spam@ee.ethz.ch                OK

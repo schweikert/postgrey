@@ -137,7 +137,7 @@ sub main()
     # parse options
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
-        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'dbdir=s',
+        'verbose|v', 'daemonize|d', 'unix|u=s', 'inet|i=s', 'user=s', 'dbdir=s', 'pidfile=s',
         'delay=i', 'max-age=i') or exit(1);
     if($opt{help})     { pod2usage(1) }
     if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
@@ -157,11 +157,12 @@ sub main()
         server => {
             commandline     => [ $0, @ARGV_saved ],
             delay           => $opt{delay} || 600,
-            port            => [ $opt{inet} ? $opt{inet} : $opt{unix} ],
+            port            => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto           => $opt{inet} ? 'tcp' : 'unix',
             user            => $opt{user} || 'postgrey',
             dbdir           => $opt{dbdir} || '/var/spool/postfix/postgrey',
             setsid          => $opt{daemonize} ? 1 : undef,
+            pid_file        => $opt{daemonize} ? $opt{pidfile} : undef,
             log_level       => $opt{verbose} ? 4 : 2,
             log_file        => $opt{daemonize} ? 'Sys::Syslog' : undef,
             syslog_facility => 'mail',
@@ -277,6 +278,7 @@ B<postgrey> [I<options>...]
  -u, --unix=PATH        listen on unix socket PATH
  -i, --inet=[HOST:]PORT listen on PORT, localhost if HOST is not specified
  -d, --daemonize        run in the background
+     --pidfile=PATH     put daemon pid into this file
      --user=USER        run as USER (default: postgrey)
      --dbdir=PATH       put db files in PATH (default: /var/spool/postfix/postgrey)
      --delay=N          greylist for N seconds (default: 600)

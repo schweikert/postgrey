@@ -562,7 +562,8 @@ sub mux_input()
             $self->{postgrey_attr} = {};
         }
         else {
-             $self->{net_server}->log(2, "ignoring garbage: <".substr($in, 0, 100).">");
+            $in =~ s/\%/_/; # log uses printf...
+            $self->{net_server}->log(2, "ignoring garbage: <".substr($in, 0, 100).">");
         }
     }
 }

@@ -1,5 +1,6 @@
-* 2005-04-14: version 1.20pre
+* 2005-04-14: version 1.20
 
+   - fix another use of syslog/printf with unchecked string
    - run in tainted mode -T (Peter Bieringer)
 
 * 2005-04-14: version 1.19

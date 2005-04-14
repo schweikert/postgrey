@@ -20,7 +20,7 @@ use POSIX qw(strftime setlocale LC_ALL);
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.19";
+my $VERSION = "1.20";
 my $hostname = hostname;
 
 sub read_clients_whitelists($)
@@ -562,7 +562,7 @@ sub mux_input()
             $self->{postgrey_attr} = {};
         }
         else {
-            $in =~ s/\%/_/; # log uses printf...
+            $in =~ s/\%/_/g; # log uses printf...
             $self->{net_server}->log(2, "ignoring garbage: <".substr($in, 0, 100).">");
         }
     }

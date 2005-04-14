@@ -20,7 +20,7 @@ use POSIX qw(strftime setlocale LC_ALL);
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
-my $VERSION = "1.21rc1";
+my $VERSION = "1.21rc2";
 my $hostname = hostname;
 
 sub read_clients_whitelists($)
@@ -475,9 +475,9 @@ sub pre_loop_hook()
 
     # unix socket permissions should be 666
     if($self->{server}{proto} eq 'unix') {
-        my $unix_path = $self->{server}{port}[0];
-        $unix_path =~ s/\|unix$//;
-        chmod 0666, $unix_path;
+        $self->{server}{port}[0] =~ /^(.*)\|unix$/ or
+            die "ERROR: wrong port definition\n";
+        chmod 0666, $1;
     }
 
     # ensure that only one instance of postgrey is running

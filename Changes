@@ -1,3 +1,7 @@
+* 2005-04-14: version 1.21rc1
+
+   - more syslog/printf fixes... (Peter Bieringer)
+
 * 2005-04-14: version 1.20
 
    - fix another use of syslog/printf with unchecked string

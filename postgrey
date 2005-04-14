@@ -344,10 +344,8 @@ sub smtpd_access_policy($$)
         if($self->is_new_instance($attr->{instance})) {
             # syslog
             my $client = $attr->{client_name} eq 'unknown' ? $attr->{client_address} : $attr->{client_name};
-            # syslog crashes if there is a % in the address
-            my $syslog_sender = $attr->{sender};
-            $syslog_sender =~ s/\%/_/g;
-
+            # syslog uses printf!
+            my $syslog_sender = $attr->{sender}; $syslog_sender =~ s/\%/%%/g;
             $self->log(2, "delayed ".($now-$first)." seconds: client=$client, from=$syslog_sender, to=$attr->{recipient}");
 
             # add X-Greylist header

@@ -2,7 +2,7 @@
 
 next if /^use lib/;
 
-s|^#!/usr.*|#!/usr/bin/perl -w|;
+s|^#!/usr.*|#!/usr/bin/perl -T -w|;
 $skip=1 if /^# local start/;
 $skip=0 if /^# local end/;
 next    if /^# local end/;

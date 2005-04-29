@@ -1,8 +1,13 @@
+* 2005-04-29: version 1.22pre
+
+   - replace log() with mylog() so that we don't need to worry about
+     format-string problems again
+
 * 2005-04-14: version 1.21
 
    Security: this release fixes a remotely exploitable DoS vulnerability.
 
-   - fix crash with '%' sender addresses (Stefan Schmidt)
+   - fix crash with '%' in sender addresses (Stefan Schmidt)
    - fix other users of unchecked strings with syslog/printf (Peter Bieringer)
    - run in tainted mode -T (Peter Bieringer)
      (version 1.19 and 1.20 were released on the same day with the above fixes)

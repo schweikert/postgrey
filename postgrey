@@ -133,6 +133,12 @@ sub do_client_substitutions($$$)
     return (join('.', @ip[0..2], '0'), $ip[3]);
 }
 
+sub mylog($$$)
+{
+    my ($self, $level, $string) = @_;
+    $self->log($level, '%s', $string);
+}
+
 sub do_maintenance($$)
 {
     my ($self, $now) = @_;
@@ -141,11 +147,11 @@ sub do_maintenance($$)
 
     # remove old db logs
 
-    $self->log(2, "cleaning up old logs...");
+    $self->mylog(2, "cleaning up old logs...");
     $db_env->txn_checkpoint(0, 0) and
         warn "can't checkpoint !? $BerkeleyDB::Error";
     for my $l ($db_env->log_archive(DB_ARCH_ABS)) {
-        $self->log(2, "rm $l");
+        $self->mylog(2, "rm $l");
         unlink $l or warn "can't remove db log $l: $!\n";
     }
 
@@ -158,7 +164,7 @@ sub do_maintenance($$)
     if($hour > 1 and $hour < 7 and
         $now - $self->{postgrey}{last_maint_keys} >= 82800)
     {
-        $self->log(2, "cleaning up old entries...");
+        $self->mylog(2, "cleaning up old entries...");
         my $max_age = $self->{postgrey}{max_age};
         my $retry_window = $self->{postgrey}{retry_window};
         my ($nr_keys_before, $nr_keys_after) = (0,0);
@@ -181,7 +187,7 @@ sub do_maintenance($$)
                 $nr_keys_after++;
             }
         }
-        $self->log(2, "cleaning main database finished. before: $nr_keys_before, after: $nr_keys_after");
+        $self->mylog(2, "cleaning main database finished. before: $nr_keys_before, after: $nr_keys_after");
 
         if($self->{postgrey}{awl_clients}) {
             # cleanup clients auto-whitelist database
@@ -198,7 +204,7 @@ sub do_maintenance($$)
                     $nr_keys_after++;
                 }
             }
-            $self->log(2, "cleaning clients database finished. before: $nr_keys_before, after: $nr_keys_after");
+            $self->mylog(2, "cleaning clients database finished. before: $nr_keys_before, after: $nr_keys_after");
         }
 
         $self->{postgrey}{last_maint_keys}=$now;
@@ -284,7 +290,7 @@ sub smtpd_access_policy($$)
         $self->do_maintenance($now);
     }
 
-    $self->log(4, "request age ".($now - $first));
+    $self->mylog(4, "request age ".($now - $first));
     my $diff = $self->{postgrey}{delay} - ($now - $first);
 
     # auto whitelist clients
@@ -318,7 +324,7 @@ sub smtpd_access_policy($$)
                     # ok, increase count
                     $cawl_count++;
                     $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-                    $self->log(2, "whitelisted: $attr->{client_name}")
+                    $self->mylog(2, "whitelisted: $attr->{client_name}")
                         if $cawl_count==$self->{postgrey}{awl_clients};
                 }
             }
@@ -344,9 +350,7 @@ sub smtpd_access_policy($$)
         if($self->is_new_instance($attr->{instance})) {
             # syslog
             my $client = $attr->{client_name} eq 'unknown' ? $attr->{client_address} : $attr->{client_name};
-            # syslog uses printf!
-            my $syslog_sender = $attr->{sender}; $syslog_sender =~ s/\%/%%/g;
-            $self->log(2, "delayed ".($now-$first)." seconds: client=$client, from=$syslog_sender, to=$attr->{recipient}");
+            $self->mylog(2, "delayed ".($now-$first)." seconds: client=$client, from=$sender, to=$attr->{recipient}");
 
             # add X-Greylist header
             my $date = strftime("%a, %d %b %Y %T %Z", localtime);
@@ -461,7 +465,7 @@ sub main()
 # reload whitelists on HUP
 sub sig_hup {
     my $self = shift;
-    $self->log(2, "HUP received: reloading whitelists...");
+    $self->mylog(2, "HUP received: reloading whitelists...");
     $self->read_clients_whitelists();
     $self->read_recipients_whitelists();
 }
@@ -542,7 +546,7 @@ sub mux_input()
         elsif($in eq '') {
             defined $attr->{request} or $attr->{request}='';
             if($attr->{request} ne 'smtpd_access_policy') {
-                $self->{net_server}->log(2, "unrecognized request type: '$attr->{request}'");
+                $self->{net_server}->mylog(2, "unrecognized request type: '$attr->{request}'");
             }
             else {
                 # decide
@@ -552,7 +556,7 @@ sub mux_input()
                     my $a = 'request: ';
                     $a .= join(' ', map {"$_=$attr->{$_}"} (sort keys %$attr));
                     $a .= " action=$action";
-                    $self->{net_server}->log(4, $a);
+                    $self->{net_server}->mylog(4, $a);
                 }
                 # give answer
                 print $fh "action=$action\n\n";
@@ -560,8 +564,7 @@ sub mux_input()
             $self->{postgrey_attr} = {};
         }
         else {
-            $in =~ s/\%/_/g; # log uses printf...
-            $self->{net_server}->log(2, "ignoring garbage: <".substr($in, 0, 100).">");
+            $self->{net_server}->mylog(2, "ignoring garbage: <".substr($in, 0, 100).">");
         }
     }
 }

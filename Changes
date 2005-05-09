@@ -1,4 +1,4 @@
-* 2005-04-29: version 1.22pre
+* 2005-04-29: version 1.22pre1
 
    - replace log() with mylog() so that we don't need to worry about
      format-string problems again

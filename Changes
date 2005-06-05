@@ -1,7 +1,9 @@
-* 2005-04-29: version 1.22pre1
+* 2005-06-05: version 1.22
 
    - replace log() with mylog() so that we don't need to worry about
      format-string problems again
+   - add support for IPv6 in whitelists (Adrian Knoth)
+   - the --dbdir option was not working because of taint-mode (Sven Mueller)
 
 * 2005-04-14: version 1.21
 

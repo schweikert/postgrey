@@ -41,6 +41,10 @@ sub read_clients_whitelists($)
                     # IP address or part of it
                     push @whitelist_ips, qr{^$_};
                 }
+                elsif(/^.*\:.*\:.*$/) {
+                    # IPv6?
+                    push @whitelist_ips, qr{^$_};
+                }
                 # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
                 elsif(/^\S+$/) {
                     push @whitelist_clients, qr{\Q$_\E$}i;
@@ -409,6 +413,12 @@ sub main()
             die "ERROR: --retry-window must be either a number of days or a number\n",
                 "       followed by 'h' for hours ('6h' for example).\n";
         }
+    }
+
+    # untaint what is given on --dbdir. It is not security sensitive since
+    # it is provided by the admin
+    if($opt{dbdir}) {
+        $opt{dbdir} =~ /^(.*)$/; $opt{dbdir} = $1;
     }
 
     # create Net::Server object and run it

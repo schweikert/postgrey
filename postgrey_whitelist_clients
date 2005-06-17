@@ -74,3 +74,7 @@ qmail.ingeno.ch
 mail1.thurweb.ch
 # 2005-01-26: tu-ilmenau.de (no retry)
 piggy.rz.tu-ilmenau.de
+# 2005-06-08: hu-berlin.de (slow: 6 hours, reported by Joachim Schoenberg)
+/^nsuncom\d*\.rz\.hu-berlin\.de$/
+# 2005-06-17: gmail.com (big pool, reported by Beat Mueller)
+/^.proxy.gmail.com$/

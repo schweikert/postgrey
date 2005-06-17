@@ -1,5 +1,6 @@
-* 2005-06-05: version 1.22
+* 2005-06-17: version 1.22pre
 
+   - updated whitelist
    - replace log() with mylog() so that we don't need to worry about
      format-string problems again
    - add support for IPv6 in whitelists (Adrian Knoth)

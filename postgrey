@@ -1,6 +1,6 @@
 #!/usr/sepp/bin/perl-5.8.4 -T -w
 
-# postgrey: a postfix greylisting policy server
+# Postgrey: a Postfix Greylisting Policy Server
 # Copyright 2004-2005 (c) ETH Zurich
 # released under the GNU General Public License
 
@@ -140,7 +140,8 @@ sub do_client_substitutions($$$)
 sub mylog($$$)
 {
     my ($self, $level, $string) = @_;
-    $self->log($level, '%s', $string);
+    $string =~ s/\%/%%/g; # for Net::Server <= 0.87
+    $self->log($level, $string);
 }
 
 sub do_maintenance($$)
@@ -251,13 +252,31 @@ sub smtpd_access_policy($$)
         return 'DUNNO' if $attr->{recipient} =~ $w;
     }
 
+    # auto whitelist clients (see below for explanation)
+    my ($cawl_db, $cawl_key, $cawl_count, $cawl_last);
+    if($self->{postgrey}{awl_clients}) {
+        $cawl_db  = $self->{postgrey}{db_cawl};
+        $cawl_key = $attr->{client_address};
+        my $cawl_val = $cawl_db->{$cawl_key};
+        ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
+        
+        # whitelist if count is enough
+        if(defined $cawl_count and $cawl_count >= $self->{postgrey}{awl_clients})
+        {
+            if($now >= $cawl_last+3600) {
+                $cawl_count++; # for statistics
+                $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+            }
+            return 'DUNNO';
+        }
+    }
+
     # lookup
     my $sender = $self->do_sender_substitutions($attr->{sender});
     my ($client_net, $client_host) =
         $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
     my $key    = lc "$client_net/$sender/$attr->{recipient}";
     my $val    = $db->{$key};
-
     my $first;
     my $last_was_successful=0;
     if(defined $val) {
@@ -271,9 +290,7 @@ sub smtpd_access_policy($$)
         else {
             # discard stored first-seen if it is the first retrial and
             # it is beyond the retry_window
-            if($now-$first > $self->{postgrey}{retry_window}) {
-                $first = $now;
-            }
+            $first = $now if $now-$first > $self->{postgrey}{retry_window};
         }
     }
     else {
@@ -303,22 +320,6 @@ sub smtpd_access_policy($$)
     #   - client not whitelisted yet? -> increase count, whitelist if count > 10 or so
     #   - client whitelisted already? -> update last-seen timestamp
     if($self->{postgrey}{awl_clients}) {
-        my $cawl_db  = $self->{postgrey}{db_cawl};
-        my $cawl_key = $attr->{client_address};
-        my $cawl_val = $cawl_db->{$cawl_key};
-        my ($cawl_count, $cawl_last);
-        ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
-        
-        # whitelist if count is enough
-        if(defined $cawl_count and $cawl_count >= $self->{postgrey}{awl_clients})
-        {
-            if($now >= $cawl_last+3600) {
-                $cawl_count++; # for statistics
-                $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-            }
-            return 'DUNNO';
-        }
-
         # greylisting succeeded
         if($diff <= 0 and !$last_was_successful) {
             # enough time has passed (record only one attempt per hour)

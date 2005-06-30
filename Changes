@@ -1,5 +1,7 @@
 * 2005-06-17: version 1.22pre
 
+   - compatibility for log() of Net::Server 0.88
+   - don't enter triplets for auto-whitelisted clients (reduce size of main db)
    - updated whitelist
    - replace log() with mylog() so that we don't need to worry about
      format-string problems again

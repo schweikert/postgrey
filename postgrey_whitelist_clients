@@ -78,3 +78,5 @@ piggy.rz.tu-ilmenau.de
 /^nsuncom\d*\.rz\.hu-berlin\.de$/
 # 2005-06-17: gmail.com (big pool, reported by Beat Mueller)
 /^.proxy.gmail.com$/
+# 2005-07-27: polytech.univ-mrs.fr (no retry, reported by Giovanni Mandorino)
+polytech.univ-mrs.fr

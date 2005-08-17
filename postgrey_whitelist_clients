@@ -80,3 +80,5 @@ piggy.rz.tu-ilmenau.de
 /^.proxy.gmail.com$/
 # 2005-07-27: polytech.univ-mrs.fr (no retry, reported by Giovanni Mandorino)
 polytech.univ-mrs.fr
+# 2005-08-17: ciphirelabs.com (needs fast responses)
+cs.ciphire.net

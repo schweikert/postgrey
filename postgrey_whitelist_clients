@@ -80,6 +80,8 @@ mail.polymed.ch
 rz.hu-berlin.de
 # 2005-06-17: gmail.com (big pool, reported by Beat Mueller)
 proxy.gmail.com
+# 2005-06-23: cacert.org (address verification)
+cacert.org
 # 2005-07-27: polytech.univ-mrs.fr (no retry, reported by Giovanni Mandorino)
 polytech.univ-mrs.fr
 # 2005-08-05: gnu.org (address verification, reported by Martin Lohmeier)

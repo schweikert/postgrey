@@ -74,11 +74,15 @@ qmail.ingeno.ch
 mail1.thurweb.ch
 # 2005-01-26: tu-ilmenau.de (no retry)
 piggy.rz.tu-ilmenau.de
+# 2005-04-06: polymed.ch (no retry)
+mail.polymed.ch
 # 2005-06-08: hu-berlin.de (slow: 6 hours, reported by Joachim Schoenberg)
-/^nsuncom\d*\.rz\.hu-berlin\.de$/
+rz.hu-berlin.de
 # 2005-06-17: gmail.com (big pool, reported by Beat Mueller)
-/^.proxy.gmail.com$/
+proxy.gmail.com
 # 2005-07-27: polytech.univ-mrs.fr (no retry, reported by Giovanni Mandorino)
 polytech.univ-mrs.fr
-# 2005-08-17: ciphirelabs.com (needs fast responses)
+# 2005-08-05: gnu.org (address verification, reported by Martin Lohmeier)
+gnu.org
+# 2005-08-17: ciphirelabs.com (needs fast responses, reported by Sven Mueller)
 cs.ciphire.net

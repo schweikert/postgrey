@@ -1,4 +1,4 @@
-* 2005-06-17: version 1.22pre
+* 2005-11-11: version 1.22
 
    - compatibility for log() of Net::Server 0.88
    - don't enter triplets for auto-whitelisted clients (reduce size of main db)

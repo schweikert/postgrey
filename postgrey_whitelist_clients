@@ -88,3 +88,5 @@ polytech.univ-mrs.fr
 gnu.org
 # 2005-08-17: ciphirelabs.com (needs fast responses, reported by Sven Mueller)
 cs.ciphire.net
+# 2005-11-11: lufthansa (no retry, reported by Peter Bieringer)
+/^gateway\d+\.np4\.de$/

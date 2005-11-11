@@ -7,6 +7,7 @@
      format-string problems again
    - add support for IPv6 in whitelists (Adrian Knoth)
    - the --dbdir option was not working because of taint-mode (Sven Mueller)
+   - allow comments on the same line (Nigel Gorry)
 
 * 2005-04-14: version 1.21
 

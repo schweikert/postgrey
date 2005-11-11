@@ -32,7 +32,7 @@ sub read_clients_whitelists($)
     for my $f (@{$self->{postgrey}{whitelist_clients_files}}) {
         if(open(CLIENTS, $f)) {
             while(<CLIENTS>) {
-                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                s/#.*$//; s/^\s+//; s/\s+$//; next if $_ eq '';
                 if(/^\/(\S+)\/$/) {
                     # regular expression
                     push @whitelist_clients, qr{$1}i;
@@ -72,7 +72,7 @@ sub read_recipients_whitelists($)
     for my $f (@{$self->{postgrey}{whitelist_recipients_files}}) {
         if(open(RECIPIENTS, $f)) {
             while(<RECIPIENTS>) {
-                s/^\s+//; s/\s+$//; next if $_ eq '' or /^#/;
+                s/#.*$//; s/^\s+//; s/\s+$//; next if $_ eq '';
                 my ($user, $domain) = split(/\@/, $_, 2);
                 if(/^\/(\S+)\/$/) {
                     # regular expression

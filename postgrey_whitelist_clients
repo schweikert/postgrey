@@ -90,3 +90,5 @@ gnu.org
 cs.ciphire.net
 # 2005-11-11: lufthansa (no retry, reported by Peter Bieringer)
 /^gateway\d+\.np4\.de$/
+# 2005-11-23: arcor-online.net (slow: 12 hours, reported by Bernd Zeimetz)
+/^mail-in-\d+\.arcor-online\.net$/

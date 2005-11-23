@@ -1,3 +1,11 @@
+* 2005-11-23: version 1.23
+
+   - fix compatibility with Berkeley-DB < 4.1
+   - fix crash in the database-cleanup routine (Vito Robar)
+   - don't be pedantic about wrong reverse-dns entries: it doesn't really help
+     and it could affect legitimate mail servers (Andreas Hoedle)
+     
+
 * 2005-11-11: version 1.22
 
    - compatibility for log() of Net::Server 0.88

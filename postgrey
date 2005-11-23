@@ -128,7 +128,6 @@ sub do_client_substitutions($$$)
         return ($ip, undef);
     }
 
-    return ($ip, undef) if $revdns eq 'unknown';
     my @ip=split(/\./, $ip);
     return ($ip, undef) unless defined $ip[3];
     # skip if it contains the last two IP numbers in the hostname
@@ -173,25 +172,30 @@ sub do_maintenance($$)
         my $max_age = $self->{postgrey}{max_age};
         my $retry_window = $self->{postgrey}{retry_window};
         my ($nr_keys_before, $nr_keys_after) = (0,0);
+        # note: deleteing hash elements in a 'each'-loop isn't supported
+        # that's why we first put them in @old_keys and then delete them
+        my @old_keys = ();
         while (my ($key, $value) = each %$db) {
             $nr_keys_before++;
             my ($first, $last) = split(/,/,$value);
             if(not defined $last) {
                 # shouldn't happen
-                delete $db->{$key};
+                push @old_keys, $key;
             }
             elsif($now - $last > $max_age) {
                 # last-seen passed max-age
-                delete $db->{$key};
+                push @old_keys, $key;
             }
-            elsif($last - $first < $self->{postgrey}{delay} and $now - $last > $retry_window) {
+            elsif($last-$first < $self->{postgrey}{delay} and $now-$last > $retry_window) {
                 # no successful entry yet and last seen passed retry-window
-                delete $db->{$key};
+                push @old_keys, $key;
             }
             else {
                 $nr_keys_after++;
             }
         }
+        for my $key (@old_keys) { delete $db->{$key}; }
+        
         $self->mylog(2, "cleaning main database finished. before: $nr_keys_before, after: $nr_keys_after");
 
         if($self->{postgrey}{awl_clients}) {
@@ -199,16 +203,18 @@ sub do_maintenance($$)
             my $cawl_db  = $self->{postgrey}{db_cawl};
             ($nr_keys_before, $nr_keys_after) = (0, 0);
             $nr_keys_after=0;
+            my @old_keys_cawl = ();
             while (my ($key, $value) = each %$cawl_db) {
                 my $cawl_last_seen = (split(/,/, $value))[1];
                 $nr_keys_before++;
                 if($now - $cawl_last_seen > $max_age) {
-                    delete $cawl_db->{$key};
+                    push @old_keys_cawl, $key;
                 }
                 else {
                     $nr_keys_after++;
                 }
             }
+            for my $key (@old_keys_cawl) { delete $cawl_db->{$key}; }
             $self->mylog(2, "cleaning clients database finished. before: $nr_keys_before, after: $nr_keys_after");
         }
 
@@ -324,14 +330,11 @@ sub smtpd_access_policy($$)
         if($diff <= 0 and !$last_was_successful) {
             # enough time has passed (record only one attempt per hour)
             if(! defined $cawl_last or $now >= $cawl_last + 3600) {
-                # host has a proper DNS record
-                if($attr->{client_name} ne 'unknown') {
-                    # ok, increase count
-                    $cawl_count++;
-                    $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-                    $self->mylog(2, "whitelisted: $attr->{client_name}")
-                        if $cawl_count==$self->{postgrey}{awl_clients};
-                }
+                # ok, increase count
+                $cawl_count++;
+                $cawl_db->{$cawl_key}=$cawl_count.','.$now;
+                $self->mylog(2, "whitelisted: $attr->{client_name}")
+                    if $cawl_count==$self->{postgrey}{awl_clients};
             }
         }
     }
@@ -506,11 +509,9 @@ sub pre_loop_hook()
         $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', '%s', "fatal: $_[0]"); die @_; };
     }
 
-    # compatibility with Berkeley-DB versions < 4.1, which don't have
-    # DB_AUTO_COMMIT:
     my $setflags = DB_TXN_NOSYNC;
-    if(defined $BerkeleyDB::{DB_AUTO_COMMIT}) {
-	$setflags |= eval "BerkeleyDB::DB_AUTO_COMMIT";
+    if($BerkeleyDB::db_version >= 4.1) {
+	$setflags |= BerkeleyDB::DB_AUTO_COMMIT;
     }
     else {
         warn "WARNING: disabling DB_AUTO_COMMIT because you are using BerkeleyDB version $BerkeleyDB::db_version. Version 4.1 is required for DB_AUTO_COMMIT. You might have problems in case of system failures to recover the database.\n";

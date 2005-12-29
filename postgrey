@@ -349,23 +349,18 @@ sub smtpd_access_policy($$)
     }
 
     # X-Greylist header:
-    if($last_was_successful) {
-        # we don't add an header, because probably this message wasn't delayed
-        # at all, since the previous one could pass through already
-        return 'DUNNO';
-    }
-    else {
-        if($self->is_new_instance($attr->{instance})) {
-            # syslog
-            my $client = $attr->{client_name} eq 'unknown' ? $attr->{client_address} : $attr->{client_name};
-            $self->mylog(2, "delayed ".($now-$first)." seconds: client=$client, from=$sender, to=$attr->{recipient}");
+    if(!$last_was_successful and $self->is_new_instance($attr->{instance})) {
+        # syslog
+        my $client = $attr->{client_name} eq 'unknown' ? $attr->{client_address} : $attr->{client_name};
+        $self->mylog(2, "delayed ".($now-$first)." seconds: client=$client, from=$sender, to=$attr->{recipient}");
 
-            # add X-Greylist header
-            my $date = strftime("%a, %d %b %Y %T %Z", localtime);
-            return 'PREPEND X-Greylist: delayed '.($now-$first).
-                " seconds by postgrey-$VERSION at $hostname; $date";
-        }
+        # add X-Greylist header
+        my $date = strftime("%a, %d %b %Y %T %Z", localtime);
+        return 'PREPEND X-Greylist: delayed '.($now-$first).
+            " seconds by postgrey-$VERSION at $hostname; $date";
     }
+
+    return 'DUNNO';
 }
 
 sub main()
@@ -509,7 +504,8 @@ sub pre_loop_hook()
         $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', '%s', "fatal: $_[0]"); die @_; };
     }
 
-    my $setflags = DB_TXN_NOSYNC;
+    # my $setflags = DB_TXN_NOSYNC;
+    my $setflags = 0; # see http://bugs.debian.org/334430
     if($BerkeleyDB::db_version >= 4.1) {
 	$setflags |= BerkeleyDB::DB_AUTO_COMMIT;
     }

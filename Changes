@@ -1,3 +1,10 @@
+* 2005-12-29: version 1.24pre
+
+   - don't use DB_TXN_NOSYNC to workaround an apparent bug in Berkeley-DB
+     (Nick Moffitt)
+   - fix use of unitialized value (Bjoern A. Zeeb)
+   - updated whitelist
+
 * 2005-11-23: version 1.23
 
    - fix compatibility with Berkeley-DB < 4.1

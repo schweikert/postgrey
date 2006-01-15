@@ -1,7 +1,7 @@
 #!/usr/sepp/bin/perl-5.8.4 -T -w
 
 # Postgrey: a Postfix Greylisting Policy Server
-# Copyright 2004-2005 (c) ETH Zurich
+# Copyright 2004-2006 (c) ETH Zurich
 # released under the GNU General Public License
 
 # see the documentation with 'perldoc postgrey'
@@ -263,6 +263,9 @@ sub smtpd_access_policy($$)
     if($self->{postgrey}{awl_clients}) {
         $cawl_db  = $self->{postgrey}{db_cawl};
         $cawl_key = $attr->{client_address};
+        if ($self->{postgrey}{privacy}) {
+             $cawl_key = Digest::SHA1::sha1_hex($cawl_key);
+        }
         my $cawl_val = $cawl_db->{$cawl_key};
         ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
         
@@ -282,6 +285,9 @@ sub smtpd_access_policy($$)
     my ($client_net, $client_host) =
         $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
     my $key    = lc "$client_net/$sender/$attr->{recipient}";
+    if ($self->{postgrey}{privacy}) {
+        $key = Digest::SHA1::sha1_hex($key);
+    }
     my $val    = $db->{$key};
     my $first;
     my $last_was_successful=0;
@@ -378,7 +384,7 @@ sub main()
         'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
         'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
-        'retry-window=s', 'greylist-action=s', 'greylist-text=s',
+        'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
@@ -455,6 +461,7 @@ sub main()
                   '/etc/postfix/postgrey_whitelist_clients.local' ],
             whitelist_recipients_files => $opt{'whitelist-recipients'} ||
                 [ '/etc/postfix/postgrey_whitelist_recipients' ],
+            privacy => defined $opt{'privacy'},
         },
     }, 'postgrey';
 
@@ -464,6 +471,11 @@ sub main()
     # read whitelist
     $server->read_clients_whitelists();
     $server->read_recipients_whitelists();
+
+    # --privacy requires Digest::SHA1
+    if($opt{'privacy'}) {
+        require 'Digest::SHA1';
+    }
 
     $0 = join(' ', @{$server->{server}{commandline}});
     $server->run;
@@ -507,7 +519,7 @@ sub pre_loop_hook()
     # my $setflags = DB_TXN_NOSYNC;
     my $setflags = 0; # see http://bugs.debian.org/334430
     if($BerkeleyDB::db_version >= 4.1) {
-	$setflags |= BerkeleyDB::DB_AUTO_COMMIT;
+        $setflags |= BerkeleyDB::DB_AUTO_COMMIT;
     }
     else {
         warn "WARNING: disabling DB_AUTO_COMMIT because you are using BerkeleyDB version $BerkeleyDB::db_version. Version 4.1 is required for DB_AUTO_COMMIT. You might have problems in case of system failures to recover the database.\n";
@@ -616,6 +628,7 @@ B<postgrey> [I<options>...]
                                   N is the minimal count of mails before a client is 
                                   whitelisted (turned on by default with value 5)
                                   specify N=0 to disable.
+     --privacy           store data using one-way hash functions
 
  Note that the --whitelist-x options can be specified multiple times,
  and that per default /etc/postfix/postgrey_whitelist_clients.local is
@@ -791,6 +804,12 @@ Mail-domain of the recipient (example.com).
 
 =back
 
+=head2 Privacy
+
+The --privacy option enable the use of a SHA1 hash function to store
+IPs and emails in the greylisting database.  This will defeat straight
+forward attempts to retrieve mail user behaviours.
+
 =head2 SEE ALSO
 
 See L<http://www.greylisting.org/> for a description of what
@@ -799,7 +818,7 @@ for a description of how Postfix policy servers work.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2005 by ETH Zurich. All rights reserved.
+Copyright (c) 2004-2006 by ETH Zurich. All rights reserved.
 
 =head1 LICENSE
 

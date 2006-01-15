@@ -1,10 +1,11 @@
-* 2005-12-29: version 1.24pre
+* 2005-12-29: version 1.24
 
+   - updated whitelist with many new entries (Vito Robar)
+   - added --privacy option (Micah Anderson)
    - don't use DB_TXN_NOSYNC to workaround an apparent bug in Berkeley-DB
      (Nick Moffitt)
    - fix use of unitialized value (Bjoern A. Zeeb)
    - Use 'permit_mynetworks' in the documentation (Keith Lofstrom)
-   - updated whitelist
 
 * 2005-11-23: version 1.23
 

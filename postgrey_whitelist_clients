@@ -94,3 +94,46 @@ cs.ciphire.net
 /^mail-in-\d+\.arcor-online\.net$/
 # 2005-12-29: netsolmail.com (no retry, reported by Gareth Greenaway)
 netsolmail.com
+# mail.likopris.si (no retry, reported by Vito Robar)
+193.77.153.67
+# jcsw.nato.int (several servers, no retry, reported by Vito Robar)
+195.235.39
+# tesla.vtszg.hr (no retry, reported by Vito Robar)
+tesla.vtszg.hr
+# mailgw*.iai.co.il (pool of several servers, reported by Vito Robar)
+/^mailgw.*\.iai\.co\.il$/
+# gw.stud-serv-mb.si (no retry, reported by Vito Robar)
+gw.stud-serv-mb.si
+# mail.commandtech.com (no retry, reported by Vito Robar)
+216.238.112.99
+# duropack.co.at (no retry, reported by Vito Robar)
+193.81.20.195
+# mail.esimit-tech.si (no retry, reported by Vito Robar)
+193.77.126.208
+# mail.resotel.be (ocasionally no retry, reported by Vito Robar)
+80.200.249.216
+# mail2.alliancefr.be (ocasionally no retry, reported by Vito Robar)
+mail2.alliancefr.be
+# webserver.turboinstitut.si (no retry, reported by Vito Robar)
+webserver.turboinstitut.si
+# mil.be (pool of different servers, reported by Vito Robar)
+193.191.218.141
+193.191.218.142
+193.191.218.143
+194.7.234.141
+194.7.234.142
+194.7.234.143
+# mail*.usafisnews.org (no retry, reported by Vito Robar)
+/^mail\d+\.usafisnews\.org$/
+# odk.fdv.uni-lj.si (no retry, reported by Vito Robar)
+/^odk.fdv.uni-lj.si$/
+# rak-gentoo-1.nameserver.de (no retry, reported by Vito Robar)
+rak-gentoo-1.nameserver.de
+# dars.si (ocasionally no retry, reported by Vito Robar)
+mx.dars.si
+# cosis.si (no retry, reported by Vito Robar)
+213.143.66.210
+# mta?.siol.net (sometimes no or slow retry; they use intermail, reported by Vito Robar)
+/^mta[12].siol.net$/
+# pim-N-N.quickinspirationsmail.com (unique sender, reported by Vito Robar)
+/^pim-\d+-\d+\.quickinspirationsmail\.com$/

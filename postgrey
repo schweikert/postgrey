@@ -1,7 +1,7 @@
 #!/usr/sepp/bin/perl-5.8.4 -T -w
 
 # Postgrey: a Postfix Greylisting Policy Server
-# Copyright 2004-2006 (c) ETH Zurich
+# Copyright (c) 2004-2006 ETH Zurich
 # released under the GNU General Public License
 
 # see the documentation with 'perldoc postgrey'

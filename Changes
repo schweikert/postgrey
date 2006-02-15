@@ -1,3 +1,7 @@
+* 2006-02-15: version 1.25pre
+
+   - bugfix: --privacy was not working
+
 * 2006-01-16: version 1.24
 
    - updated whitelist with many new entries (Vito Robar)

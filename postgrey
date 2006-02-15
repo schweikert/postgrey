@@ -474,7 +474,7 @@ sub main()
 
     # --privacy requires Digest::SHA1
     if($opt{'privacy'}) {
-        require 'Digest::SHA1';
+        require Digest::SHA1;
     }
 
     $0 = join(' ', @{$server->{server}{commandline}});

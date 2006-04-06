@@ -137,3 +137,5 @@ mx.dars.si
 /^mta[12].siol.net$/
 # pim-N-N.quickinspirationsmail.com (unique sender, reported by Vito Robar)
 /^pim-\d+-\d+\.quickinspirationsmail\.com$/
+# flymonarch (no retry, reported by Marko Djukic)
+flymonarch.com

@@ -139,3 +139,5 @@ mx.dars.si
 /^pim-\d+-\d+\.quickinspirationsmail\.com$/
 # flymonarch (no retry, reported by Marko Djukic)
 flymonarch.com
+# wxs.nl (no retry, reported by Johannes Fehr)
+/^p?smtp.*\.wxs\.nl$/

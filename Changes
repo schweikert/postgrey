@@ -1,6 +1,8 @@
-* 2006-02-15: version 1.25pre
+* 2006-05-03: version 1.25pre
 
    - bugfix: --privacy was not working
+   - change default greylist-text not to include the number of
+     seconds left, since it seems that spammers are misusing it.
 
 * 2006-01-16: version 1.24
 

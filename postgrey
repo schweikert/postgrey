@@ -455,7 +455,7 @@ sub main()
                     $opt{'auto-whitelist-clients'} : 5) : 5,
             retry_window     => $retry_window,
             greylist_action  => $opt{'greylist-action'} || 'DEFER_IF_PERMIT',
-            greylist_text    => $opt{'greylist-text'} || 'Greylisted for %s seconds (see http://isg.ee.ethz.ch/tools/postgrey/help/%r.html)',
+            greylist_text    => $opt{'greylist-text'} || 'Greylisted, see http://isg.ee.ethz.ch/tools/postgrey/help/%r.html',
             whitelist_clients_files    => $opt{'whitelist-clients'} ||
                 [ '/etc/postfix/postgrey_whitelist_clients' ,
                   '/etc/postfix/postgrey_whitelist_clients.local' ],

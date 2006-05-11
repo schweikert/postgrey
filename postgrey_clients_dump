@@ -1,0 +1,49 @@
+#!/usr/sepp/bin/perl-5.8.4 -w
+
+use lib '/usr/isgtc/lib/perl';
+
+use BerkeleyDB;
+use Socket;
+
+my $dbdir = '/var/spool/postfix/postgrey';
+
+sub resolv($) {
+    my $host = shift;
+    my $iaddr = inet_aton($host);
+    return gethostbyaddr($iaddr, AF_INET) || $host;
+}
+
+sub dbopen($)
+{
+    my ($dbdir) = @_;
+    my %db;
+
+    my $dbenv = BerkeleyDB::Env->new(
+	-Home     => $dbdir,
+	-Flags    => DB_INIT_TXN|DB_INIT_MPOOL|DB_INIT_LOG,
+    ) or die "ERROR: can't open DB environment: $!\n";
+
+    tie(%db, 'BerkeleyDB::Btree',
+	-Filename => "postgrey_clients.db",
+	-Flags    => DB_RDONLY,
+	-Env      => $dbenv,
+    ) or die "ERROR: can't open database $dbdir/postgrey_clients.db: $!\n";
+
+    return \%db;
+}
+
+sub main()
+{
+    # go through the database
+    my $db = dbopen($dbdir);
+    while (my ($key, $value) = each %$db) {
+	my ($c,$l) = split(/,/,$value);
+	$c >= 5 or next;
+	my $host = resolv($key);
+	print "$host ($c)\n";
+    }
+}
+
+main;
+
+# vim: sw=4

@@ -5,8 +5,6 @@
    - change default greylist-text not to include the number of
      seconds left, since it seems that spammers are misusing it.
    - added --hostname option (Maarten de Vries)
-   - fix logging on Solaris when syslogd is not running in server
-     mode (Phredd Groves)
 
 * 2006-01-16: version 1.24
 

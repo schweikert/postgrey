@@ -439,7 +439,7 @@ sub main()
             pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
             log_level        => $opt{verbose} ? 4 : 2,
             log_file         => $opt{daemonize} ? 'Sys::Syslog' : undef,
-            syslog_logsock   => $^O eq 'solaris' ? 'stream' : 'unix',
+            syslog_logsock   => $^O eq 'solaris' ? 'inet' : 'unix',
             syslog_facility  => 'mail',
             syslog_ident     => 'postgrey',
         },

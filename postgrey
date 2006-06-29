@@ -21,7 +21,6 @@ use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
 
 my $VERSION = "1.25";
-my $hostname = hostname;
 
 sub read_clients_whitelists($)
 {
@@ -363,7 +362,7 @@ sub smtpd_access_policy($$)
         # add X-Greylist header
         my $date = strftime("%a, %d %b %Y %T %Z", localtime);
         return 'PREPEND X-Greylist: delayed '.($now-$first).
-            " seconds by postgrey-$VERSION at $hostname; $date";
+            " seconds by postgrey-$VERSION at $self->{postgrey}{hostname}; $date";
     }
 
     return 'DUNNO';
@@ -385,6 +384,7 @@ sub main()
         'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
+        'hostname=s',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
@@ -439,7 +439,7 @@ sub main()
             pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
             log_level        => $opt{verbose} ? 4 : 2,
             log_file         => $opt{daemonize} ? 'Sys::Syslog' : undef,
-            syslog_logsock   => $^O eq 'solaris' ? 'inet' : 'unix',
+            syslog_logsock   => $^O eq 'solaris' ? 'stream' : 'unix',
             syslog_facility  => 'mail',
             syslog_ident     => 'postgrey',
         },
@@ -462,6 +462,7 @@ sub main()
             whitelist_recipients_files => $opt{'whitelist-recipients'} ||
                 [ '/etc/postfix/postgrey_whitelist_recipients' ],
             privacy => defined $opt{'privacy'},
+            hostname => defined $opt{hostname} ? $opt{hostname} : hostname,
         },
     }, 'postgrey';
 
@@ -629,6 +630,7 @@ B<postgrey> [I<options>...]
                                   whitelisted (turned on by default with value 5)
                                   specify N=0 to disable.
      --privacy           store data using one-way hash functions
+     --hostname=NAME     set the hostname (default: `hostname`)
 
  Note that the --whitelist-x options can be specified multiple times,
  and that per default /etc/postfix/postgrey_whitelist_clients.local is

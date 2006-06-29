@@ -21,7 +21,7 @@ pub/postgrey-$(VERSION).tar.gz: version
 	rm -r postgrey-$(VERSION)
 
 publish: pub/postgrey-$(VERSION).tar.gz
-	cvs tag v$(MAJOR)_$(MINOR)
+	svn copy svn://svn.ee.ethz.ch/isgtc-src/trunk/postgrey svn://svn.ee.ethz.ch/isgtc-src/tags/postgrey/release-$(VERSION) || true
 	mv $(PUB)/*.tar.gz $(PUB)/old
 	cp Changes pub/postgrey-$(VERSION).tar.gz $(PUB)
 

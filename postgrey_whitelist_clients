@@ -141,3 +141,13 @@ mx.dars.si
 flymonarch.com
 # wxs.nl (no retry, reported by Johannes Fehr)
 /^p?smtp.*\.wxs\.nl$/
+# ibm.com (big pool, reported by Casey Peel)
+ibm.com
+# messagelabs.com (big pool, reported by John Tobin)
+/^mail\d+\.messagelabs\.com$/
+# ptb.de (slow, reported by Joachim Schoenberg)
+berlin.ptb.de
+# registrarmail.net (unique sender names, reported by Simon Waters)
+registrarmail.net
+# google.com (big pool, reported by Matthias Dyer)
+/^.*-out-.*\.google\.com$/

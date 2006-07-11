@@ -1,4 +1,4 @@
-* 2006-06-29: version 1.26
+* 2006-07-12: version 1.26
 
    - added support for Exim (Guy Antony Halse)
    - greatly improve cleanup speed with explicit transactions (Maeda Atusi)

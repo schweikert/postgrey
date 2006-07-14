@@ -12,7 +12,7 @@ pub/postgrey-$(VERSION).tar.gz: version
 	mkdir -p postgrey-$(VERSION)/contrib
 	./isgtc_to_public postgrey >postgrey-$(VERSION)/postgrey
 	chmod +x postgrey-$(VERSION)/postgrey
-	cp COPYING Changes README postgrey-$(VERSION)
+	cp COPYING Changes README README.exim postgrey-$(VERSION)
 	cp postgrey_whitelist_clients postgrey-$(VERSION)
 	cp postgrey_whitelist_recipients postgrey-$(VERSION)
 	cp contrib/postgreyreport postgrey-$(VERSION)/contrib

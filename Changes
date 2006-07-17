@@ -1,3 +1,7 @@
+* 2006-07-17: version 1.27pre1
+
+   - fix socket permissions with Net::Server >= 0.94
+
 * 2006-07-12: version 1.26
 
    - added support for Exim (Guy Antony Halse)

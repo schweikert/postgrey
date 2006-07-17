@@ -510,7 +510,9 @@ sub pre_loop_hook()
     umask 0077;
 
     # unix socket permissions should be 666
-    if($self->{server}{proto}[0] eq 'unix') {
+    my $proto = Net::Server::VERSION < 0.94 ?
+        $self->{server}{proto} : $self->{server}{proto}[0];
+    if($proto eq 'unix') {
         $self->{server}{port}[0] =~ /^(.*)\|unix$/ or
             die "ERROR: wrong port definition\n";
         chmod 0666, $1;

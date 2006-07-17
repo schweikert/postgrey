@@ -1,6 +1,6 @@
-* 2006-07-17: version 1.27pre1
+* 2006-07-17: version 1.27
 
-   - fix socket permissions with Net::Server >= 0.94
+   - fix socket permissions with Net::Server >= 0.94 (Leos Bitto)
 
 * 2006-07-12: version 1.26
 

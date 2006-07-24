@@ -45,7 +45,8 @@
 
 * 2005-04-14: version 1.21
 
-   Security: this release fixes a remotely exploitable DoS vulnerability.
+   Security: this release fixes a remotely exploitable DoS vulnerability
+   (CVE-2005-1127)
 
    - fix crash with '%' in sender addresses (Stefan Schmidt)
    - fix other users of unchecked strings with syslog/printf (Peter Bieringer)

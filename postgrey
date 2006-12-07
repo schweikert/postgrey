@@ -233,6 +233,9 @@ sub do_maintenance($$)
 sub is_new_instance($$)
 {
     my ($self, $inst) = @_;
+    return 1 if not defined $inst; # in case the 'instance' parameter
+                                   # was not supplied by the client (Exim)
+
     # we keep a list of the last 20 "instances", which identify unique messages
     # so that for example we only put one X-Greylist header per message.
     $self->{postgrey}{instances} = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]

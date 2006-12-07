@@ -41,8 +41,8 @@ accor-hotels.com
 mot.com
 # 2004-07-01: nic.fr (address verification, reported by Arnaud Launay)
 nic.fr
-# 2004-07-01: verizon.net (address verification, reported by Bill Moran and Eric)
-/^sc\d+pub\.verizon\.net$/
+# 2004-07-01: verizon.net (address verification, reported by Bill Moran and Eric, adapted by Adam C. Mathews)
+/^s[cv]\d+pub\.verizon\.net$/
 # 2004-07-02: cs.columbia.edu (no retry)
 cs.columbia.edu
 # 2004-07-02: papersinvited.com (no retry)
@@ -151,3 +151,9 @@ berlin.ptb.de
 registrarmail.net
 # google.com (big pool, reported by Matthias Dyer)
 /^.*-out-.*\.google\.com$/
+# orange.fr (big pool, reported by Loïc Le Loarer)
+/^smtp\d+\.orange\.fr$/
+# citigroup.com (slow retry, reported by Michael Monnerie)
+/^smtp\d+.citigroup.com$/
+# cruisingclub.ch (no retry)
+mail.ccs-cruising.ch

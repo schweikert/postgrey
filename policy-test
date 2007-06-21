@@ -169,9 +169,10 @@ can be used for:
 
 =back
 
-Note that this program is still in its very early stages and does support
-a small subset of the normal attributes given in the Postfix policy delegation
-protocol. It basically supports the bare minimum to make it work with Postgrey.
+Note that this program is still in its very early stages of development and
+does only support a small subset of the normal attributes used in the Postfix
+policy delegation protocol. It basically supports the bare minimum to make it
+work with Postgrey.
 
 Also note that a non-standard attribute is being generated: policy_test_time
 contains the Unix timestamp of when the client connected.

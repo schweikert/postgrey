@@ -1,6 +1,7 @@
 postgrey
 postgrey_whitelist_recipients
 postgrey_whitelist_clients
+policy-test
 Changes
 COPYING
 README.exim

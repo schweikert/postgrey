@@ -1,7 +1,16 @@
-* 2006-10-13: version 1.28
+* 2007-06-21: version 1.28
 
-   - fix 'use of unitialized value' warning with Exim
+   - improved logging (postgrey is now more verbose, use the new --quiet
+     option if that bothers you)
+   - improved Exim support (see Debian bug #380257)
+   - workaround for a bug in Exchange dealing with temporary failures
+     (use DSN code 4.2.0 instead of the default 4.7.1)
+   - added 'policy-test' script for testing postgrey's performance or pre-seeding
+     the database
+   - fix logging of delayed, unresolveable clients in syslog (Andreas Metzler)
+   - more descriptive error message on DB failure (Adrian von Bidder)
    - updated whitelist
+   - new homepage: http://postgrey.schweikert.ch/
 
 * 2006-07-17: version 1.27
 

@@ -1,0 +1,205 @@
+#!/usr/bin/perl -w
+
+# policy-test: Postfix Policy Daemon Testing Tool
+# Copyright (c) 2007 Open Systems AG, Switzerland
+# released under the GNU General Public License
+
+# see the documentation with 'perldoc policy-test'
+
+use strict;
+use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
+use Pod::Usage;
+use Parse::Syslog;
+use IO::Socket::INET;
+
+my $VERSION = '0.1';
+my $requests; # total number of requests done
+my $policy_service;
+my %opt = ();
+
+sub log_to_policy($)
+{
+    my ($file) = @_;
+    my $parser = Parse::Syslog->new($file);
+
+    my %state;
+
+    while(my $sl = $parser->next) {
+        $sl->{program} =~ /^postfix\/(.*)/ or next;
+        my $pprogram = $1;
+        if($sl->{text} =~ /^NOQUEUE/) {
+            $sl->{text} =~ m{
+                ^NOQUEUE:\ reject:   # NOQUEUE: reject: 
+                \ RCPT\ from         # RCPT from
+                \ ([^[]+)            # mail.onezot.com
+                \[([^]]*)\]          # [64.38.44.154]
+                :.*?;                # : 450 4.1.8 <apache@...;
+                \ (.*)               # from=<apache@host.onezot.com>
+            }x or do {
+                warn "can't parse: $sl->{text}\n";
+                next;
+            };
+            my ($name, $addr, $other) = ($1, $2, $3);
+            my ($sender, $recipient);
+            $other =~ /\bfrom=<([^>]*)>/ and $sender=$1;
+            $other =~ /\bto=<([^>]*)>/   and $recipient=$1;
+            my %attrs = (
+                time => $sl->{timestamp},
+                client_name => $name,
+                client_address => $addr,
+                sender => $sender,
+                recipient => $recipient
+            );
+            feed_policy(\%attrs);
+        }
+        elsif($sl->{text} =~ /^([0-9A-F]+):(.*)/) {
+            my ($queue_id, $data) = ($1, $2);
+            if($data =~ / client=([^[]+)\[([^]]+)\]/) {
+                $state{$queue_id}{time}=$sl->{timestamp};
+                $state{$queue_id}{client_name}=$1;
+                $state{$queue_id}{client_address}=$2;
+            }
+            defined $state{$queue_id}{time} or next;
+            if($data =~ / from=<([^>]*)>/) {
+                $state{$queue_id}{sender}=$1;
+            }
+            if($data =~ /to=<([^>]*)>/) {
+                $state{$queue_id}{recipient}=$1;
+            }
+            if(defined $state{$queue_id}{sender}
+                and defined $state{$queue_id}{recipient})
+            {
+                feed_policy($state{$queue_id});
+                delete($state{$queue_id});
+            }
+        }
+    }
+}
+
+my $socket;
+sub feed_policy($)
+{
+    my ($data) = @_;
+    $requests++;
+    if(not defined $socket) {
+        if($policy_service =~ /^inet:(.*):(\d+)$/) {
+            $socket = new IO::Socket::INET(
+                PeerAddr => $1,
+                PeerPort => $2,
+                Proto    => 'tcp',
+            ) or die "Can't connect to $1:$2: $!\n";
+        }
+        elsif($policy_service =~ /^unix:(.*)$/) {
+            $socket = new IO::Socket::UNIX($1) or
+                die "Can't open $1: $1:$2: $!\n";
+        }
+    }
+    
+    my $request = "request=smtpd_access_policy\n";
+    $request   .= "protocol_state=RCPT\n";
+    $request   .= "protocol_name=SMTP\n";
+
+    for my $k (keys %$data) {
+        my $val = $data->{$k};
+        $k = 'policy_test_time' if $k eq 'time';
+        $request .= "$k=$val\n";
+    }
+    $request .= "\n";
+
+    print $socket $request;
+    print $request if $opt{verbose};
+
+    my $line;
+    do {
+        $line = <$socket>;
+        print $line if $opt{verbose} and $line ne "\n";
+    } while($line ne "\n");
+    print "\n" if $opt{verbose};
+}
+
+sub main()
+{
+    # parse options
+    GetOptions(\%opt, 'help|h', 'man', 'version', 'verbose|v') or exit(1);
+
+    if($opt{help})     { pod2usage(1) }
+    if($opt{man})      { pod2usage(-exitstatus => 0, -verbose => 2) }
+    if($opt{version})  { print "postgrey $VERSION\n"; exit(0) }
+
+    $policy_service = shift @ARGV;
+    defined $policy_service and
+        $policy_service =~ /^(unix:\S+|inet:\S+:\d+)$/ or
+        pod2usage(1);
+
+    my $start_time = time;
+    log_to_policy('-');
+    my $elapsed = time-$start_time;
+    my $rate = $elapsed != 0 ? "(". $requests / $elapsed . " r/s)" : '';
+    print "$requests requests in ${elapsed}s $rate\n";
+}
+
+main;
+
+__END__
+
+=head1 NAME
+
+policy-test - Postfix Policy Daemon Testing Tool
+
+=head1 SYNOPSIS
+
+B<policy-test> [I<options>...] unix:/file/path
+B<policy-test> [I<options>...] inet:hostname:port
+
+ -h, --help              display this help and exit
+     --version           output version information and exit
+ -v, --verbose           increase verbosity level
+
+=head1 DESCRIPTION
+
+policy-test is a script that converts Postfix log entries on the standard input
+into requests to the Postfix policy daemon given as the first argument. It
+can be used for:
+
+=over 4
+
+=item Testing the performance of a policy daemon
+
+=item Pre-seeding a Greylist policy daemon with data from the logs
+
+=back
+
+Note that this program is still in its very early stages and does support
+a small subset of the normal attributes given in the Postfix policy delegation
+protocol. It basically supports the bare minimum to make it work with Postgrey.
+
+Also note that a non-standard attribute is being generated: policy_test_time
+contains the Unix timestamp of when the client connected.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2007 by Open Systems AG. All rights reserved.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+=head1 AUTHOR
+
+S<David Schweikert E<lt>david@schweikert.chE<gt>>
+
+=cut
+
+# vim: sw=4 et

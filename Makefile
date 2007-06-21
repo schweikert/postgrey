@@ -26,13 +26,8 @@ merge:
 	svk smerge -I -f //postgrey
 
 build:
-	mkdir -p postgrey-$(VERSION)/contrib
-	./isgtc_to_public postgrey >postgrey-$(VERSION)/postgrey
-	chmod +x postgrey-$(VERSION)/postgrey
-	cp COPYING Changes README README.exim postgrey-$(VERSION)
-	cp postgrey_whitelist_clients postgrey-$(VERSION)
-	cp postgrey_whitelist_recipients postgrey-$(VERSION)
-	cp contrib/postgreyreport postgrey-$(VERSION)/contrib
+	mkdir -p postgrey-$(VERSION)
+	tar cf - --files-from MANIFEST | (cd postgrey-$(VERSION) && tar xf -)
 	[ -d pub ] || mkdir pub
 	tar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)

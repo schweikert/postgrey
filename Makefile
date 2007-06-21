@@ -1,12 +1,14 @@
 MAJOR = 1
-MINOR = 27
+MINOR = 28
 VERSION = $(MAJOR).$(MINOR)
 PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 
+all: tag-build
+
+tag-build: version tag merge build
+
 version:
 	perl -pi -e 's|^my \$$VERSION.*|my \$$VERSION = '"'"'$(VERSION)'"'"';|' postgrey
-
-tarball: pub/postgrey-$(VERSION).tar.gz
 
 tag:
 	@svk st | grep 'M' >/dev/null; \
@@ -20,7 +22,10 @@ tag:
 	fi
 	svk cp -m 'Tag version $(MAJOR).$(MINOR)' //postgrey/trunk //postgrey/tags/version-$(MAJOR).$(MINOR)
 
-pub/postgrey-$(VERSION).tar.gz: version
+merge:
+	svk smerge -I -f //postgrey
+
+build:
 	mkdir -p postgrey-$(VERSION)/contrib
 	./isgtc_to_public postgrey >postgrey-$(VERSION)/postgrey
 	chmod +x postgrey-$(VERSION)/postgrey
@@ -29,12 +34,7 @@ pub/postgrey-$(VERSION).tar.gz: version
 	cp postgrey_whitelist_recipients postgrey-$(VERSION)
 	cp contrib/postgreyreport postgrey-$(VERSION)/contrib
 	[ -d pub ] || mkdir pub
-	gtar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
+	tar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)
 
-publish: pub/postgrey-$(VERSION).tar.gz
-	svn copy svn://svn.schweikert.ch/isgtc-src/trunk/postgrey svn://svn.ee.ethz.ch/isgtc-src/tags/postgrey/release-$(VERSION) || true
-	mv $(PUB)/*.tar.gz $(PUB)/old
-	cp Changes pub/postgrey-$(VERSION).tar.gz $(PUB)
-
-.PHONY: version publish tarball
+.PHONY: all tag-build version tag merge build

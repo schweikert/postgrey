@@ -1,0 +1,55 @@
+Using Postgrey with Exim
+------------------------
+Whilst Postgrey is designed to work with the Postfix MTA it is possible to
+get it to work with Exim.  This isn't the only way to get greylisting to
+work under Exim[1], and it might not even be the easiest.  Postgrey does,
+however, have some advantages over the alternatives that may be useful
+depending on your situation.
+
+In order to get Postgrey and Exim to cooperate we need to get Exim to
+implement enough of Postfix's access policy delegation protocol[2] to be
+able to talk to the Postgrey daemon, which we can do in an acl_smtp_rcpt ACL
+in Exim's config file:
+
+ defer log_message = greylisted host $sender_host_address
+       set acl_m0  = request=smtpd_access_policy\nprotocol_state=RCPT\nprotocol_name=${uc:$received_protocol}\nhelo_name=$sender_helo_name\nclient_address=$sender_host_address\nclient_name=$sender_host_name\nsender=$sender_address\nrecipient=$local_part@$domain\n\n
+       set acl_m0  = ${sg{${readsocket{/var/run/postgrey}{$acl_m0}{5s}{}{action=DUNNO}}}{action=}{}}
+       message     = ${sg{$acl_m0}{^\\w+\\s*}{}}
+       condition   = ${if eq{${uc:${substr{0}{5}{$acl_m0}}}}{DEFER}{true}{false}}
+
+Whilst this ACL looks complicated, all it really does tells Exim to defer
+incoming e-mail if it is greylisted and has no effect once the greylisting
+period is over.  It fails safe in the sense that it'll pass all e-mail
+without deferring it if it can't talk to Postgrey (the hard-coded
+"action=DUNNO").  It's also worth noting that it isn't a full implementation
+of Postfix's policy protocol -- it is just enough to get the greylisting job
+done in a reasonably sane way.
+
+You'll obviously need to adjust the above ACL to match your setup.  In
+particular you might need to change the socket path from /var/run/postgrey. 
+You should also check that you're not already using $acl_m0 for something
+else (you can change all occurrences of $acl_m0 to any unused variable
+between $acl_m1 and $acl_m9 if you are).
+
+Postfix's protocol allows for a policy server to prepend a header on
+delivered e-mail, and Postgrey uses this to notify users of how long mail
+was delayed for. If you want to make use of this feature, you need the
+following ACL somewhere under your defer one:
+
+  warn message     = ${sg{$acl_m0}{^\\w+\\s*}{}}
+       condition   = ${if eq{${uc:${substr{0}{7}{$acl_m0}}}}{PREPEND}{true}{false}}
+
+Once you've changed your Exim config, you'll also need to set up and
+configure Postgrey.  You do this as you would for Postfix, except that you
+need to add the --exim option to the postgrey command line.  This alters the
+behavior of Postgrey slightly and makes it close the connection as Exim's
+readsocket expansion expects.
+
+You can test your new configuration using Exim's -bh command line option to
+emulate SMTP sessions from a variety of different places.
+
+-- 
+- Guy Antony Halse <guy@rucus.ru.ac.za>
+
+[1] http://www.greylisting.org/implementations/exim.shtml
+[2] http://www.postfix.org/SMTPD_POLICY_README.html

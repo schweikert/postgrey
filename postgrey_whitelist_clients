@@ -170,3 +170,5 @@ rambler.ru
 /^postfix[0-9]+-g[0-9]+\.free\.fr$/
 # thehartford.com (pool + long retry, reported by Jacob Leifman)
 /^netmail\d+\.thehartford\.com$/
+# abb.com (only one retry, reported by Roman Plessl)
+/^nse\d+\.abb\.com$/

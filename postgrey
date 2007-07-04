@@ -898,13 +898,4 @@ S<David Schweikert E<lt>david@schweikert.chE<gt>>
 
 =cut
 
-# Emacs Configuration
-#
-# Local Variables:
-# mode: cperl
-# eval: (cperl-set-style "PerlStyle")
-# mode: flyspell
-# mode: flyspell-prog
-# End:
-#
 # vi: sw=4 et

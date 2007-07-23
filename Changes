@@ -1,4 +1,4 @@
-* 2007-07-20: version 1.29
+* 2007-07-23: version 1.29
 
    - workaround for a possible crash with Sys::Syslog < 0.15 when syslog
      messages were generated during syslog file rotation

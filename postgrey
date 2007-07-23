@@ -15,6 +15,7 @@ use Net::Server::Multiplex;
 use BerkeleyDB;
 use Fcntl ':flock'; # import LOCK_* constants
 use Sys::Hostname;
+use Sys::Syslog; # used only to find out which version we use
 use POSIX qw(strftime setlocale LC_ALL);
 
 use vars qw(@ISA);
@@ -141,7 +142,20 @@ sub mylog($$$)
 {
     my ($self, $level, $string) = @_;
     $string =~ s/\%/%%/g; # for Net::Server <= 0.87
-    $self->log($level, $string);
+    if(!defined $Sys::Syslog::VERSION or $Sys::Syslog::VERSION lt '0.15'
+    or !defined $Net::Server::VERSION or $Net::Server::VERSION lt '0.94') {
+        # Workaround for a crash when syslog daemon is temporarily not
+        # present (for example on syslog rotation).
+        # Note that this is not necessary with Sys::Syslog >= 0.15 and
+        # Net::Server >= 0.94 thanks to the nofatal Option.
+        eval {
+            local $SIG{"__DIE__"} = sub { };
+            $self->log($level, $string);
+        };
+    }
+    else {
+        $self->log($level, $string);
+    }
 }
 
 sub mylog_action($$$;$$)
@@ -479,6 +493,21 @@ sub main()
         $opt{dbdir} =~ /^(.*)$/; $opt{dbdir} = $1;
     }
 
+    # determine proper "logsock" for Sys::Syslog
+    my $syslog_logsock;
+    if(defined $Sys::Syslog::VERSION and $Sys::Syslog::VERSION ge '0.15') {
+        # use 'native' when Sys::Syslog >= 0.15
+        $syslog_logsock = 'native';
+    }
+    elsif($^O eq 'solaris') {
+        # 'stream' is broken and 'unix' doesn't work on Solaris: only 'inet'
+        # seems to be useable with Sys::Syslog < 0.15
+        $syslog_logsock = 'inet';
+    }
+    else {
+        $syslog_logsock = 'unix';
+    }
+
     # create Net::Server object and run it
     my $server = bless {
         server => {
@@ -492,7 +521,7 @@ sub main()
             pid_file         => $opt{daemonize} ? $opt{pidfile} : undef,
             log_level        => $opt{quiet} ? 1 : ($opt{verbose} ? 3 : 2),
             log_file         => $opt{daemonize} ? 'Sys::Syslog' : undef,
-            syslog_logsock   => $^O eq 'solaris' ? 'inet' : 'unix',
+            syslog_logsock   => $syslog_logsock,
             syslog_facility  => 'mail',
             syslog_ident     => 'postgrey',
         },

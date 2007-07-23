@@ -2,7 +2,7 @@
 
    - workaround for a possible crash with Sys::Syslog < 0.15 when syslog
      messages were generated during syslog file rotation
-   - use the 'native' logging socket with Sys::Syslog >= 0.15
+   - use the 'native' logging socket with Sys::Syslog >= 0.15 (Philipp Koller)
  
 * 2007-06-21: version 1.28
 

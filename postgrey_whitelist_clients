@@ -172,3 +172,5 @@ rambler.ru
 /^netmail\d+\.thehartford\.com$/
 # abb.com (only one retry, reported by Roman Plessl)
 /^nse\d+\.abb\.com$/
+# 2007-07-27: sourceforge.net (sender verification)
+lists.sourceforge.net

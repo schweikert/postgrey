@@ -1,3 +1,9 @@
+* 2007-08-02: version 1.30
+
+   - implemented --listen-queue-size option (you usually don't need to set it
+     except for big sites).
+   - small fix to the 'native' syslogging implemented in 1.29
+
 * 2007-07-23: version 1.29
 
    - workaround for a possible crash with Sys::Syslog < 0.15 when syslog

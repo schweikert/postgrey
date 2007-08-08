@@ -1,3 +1,8 @@
+* UNRELEASED: version 1.31
+
+   - improve logging of unresolveable hosts (Adrian von Bidder, Heiko
+     Schlichting)
+
 * 2007-08-02: version 1.30
 
    - implemented --listen-queue-size option (you usually don't need to set it

@@ -169,7 +169,7 @@ sub mylog_action($$$;$$)
     push @info, "reason=$reason" if defined $reason;
     push @info, $additional_info if defined $additional_info;
     for my $a (qw(client_name client_address sender recipient)) {
-        push @info, "$a=$attr->{$a}" if defined $attr->{$a};
+        push @info, "$a=$attr->{$a}" if $attr->{$a};
     }
     $str .= join(', ', @info);
     $self->mylog(2, $str);
@@ -394,7 +394,10 @@ sub smtpd_access_policy($$)
                 # ok, increase count
                 $cawl_count++;
                 $cawl_db->{$cawl_key}=$cawl_count.','.$now;
-                $self->mylog(1, "whitelisted: $attr->{client_name}")
+                my $client = $attr->{client_name} ?
+                    $attr->{client_name}.'['.$attr->{client_address}.']' :
+                    $attr->{client_address};
+                $self->mylog(1, "whitelisted: $client")
                     if $cawl_count==$self->{postgrey}{awl_clients};
             }
         }

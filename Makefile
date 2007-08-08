@@ -1,7 +1,6 @@
 MAJOR = 1
 MINOR = 30
 VERSION = $(MAJOR).$(MINOR)
-PUB=/usr/tardis/netvar/websites/isg-tools/postgrey/pub
 
 all: tag-build
 

@@ -574,7 +574,9 @@ sub main()
     $0 = join(' ', @{$server->{server}{commandline}});
     $server->run;
 
-    $server->mylog(1, "Exiting");
+    # shouldn't get here
+    $server->mylog(1, "Exiting!");
+    exit 1;
 }
 
 ##### Net::Server::Multiplex methods:
@@ -680,6 +682,15 @@ sub mux_input()
             $self->{net_server}->mylog(1, "ignoring garbage: <".substr($in, 0, 100).">");
         }
     }
+}
+
+sub fatal_hook()
+{
+    my ($self, $error, $package, $file, $line) = @_;
+    # Net::Server calls $self->server_close but, unfortunately,
+    # it does exit(0) (with Net::Server 0.97)...
+    # It is however useful for init-script to detect non-zero exit codes
+    die('ERROR: ' . $error);
 }
 
 main;

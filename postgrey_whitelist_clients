@@ -174,3 +174,5 @@ rambler.ru
 /^nse\d+\.abb\.com$/
 # 2007-07-27: sourceforge.net (sender verification)
 lists.sourceforge.net
+# 2007-08-06: polytec.de (no retry, reported by Patrick McLean)
+polytec.de

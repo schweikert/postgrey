@@ -64,11 +64,11 @@ sub read_clients_whitelists($)
                 }
                 elsif(/^\d{1,3}(?:\.\d{1,3}){0,3}$/) {
                     # IP address or part of it
-                    push @whitelist_ips, qr{^$_};
+                    push @whitelist_ips, qr{^\Q$_\E\b};
                 }
                 elsif(/^.*\:.*\:.*$/) {
                     # IPv6?
-                    push @whitelist_ips, qr{^$_};
+                    push @whitelist_ips, qr{^\Q$_\E\b};
                 }
                 elsif(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/) {
                     my ($net, $mask) = cidr_parse($_);
@@ -81,7 +81,7 @@ sub read_clients_whitelists($)
                 }
                 # note: we had ^[^\s\/]+$ but it triggers a bug in perl 5.8.0
                 elsif(/^\S+$/) {
-                    push @whitelist_clients, qr{\Q$_\E$}i;
+                    push @whitelist_clients, qr{(?:^|\.)\Q$_\E$}i;
                 }
                 else {
                     warn "$f line $.: doesn't look like a hostname\n";
@@ -127,7 +127,7 @@ sub read_recipients_whitelists($)
                 }
                 else {
                     # domain ($user is the domain)
-                    push @whitelist_recipients, qr{\Q$user\E$}i;
+                    push @whitelist_recipients, qr{(?:^|\.)\Q$user\E$}i;
                 }
             }
         }

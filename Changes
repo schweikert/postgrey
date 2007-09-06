@@ -6,6 +6,7 @@
    - updated whitelist
    - fix unix socket permission issues (Martin F Krafft, Adrian von Bidder,
      Leos Bitto, Debian bug #376910)
+   - fix regexps for matching hosts in whitelists (Antonello Nocchi)
 
 * 2007-08-02: version 1.30
 

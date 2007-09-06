@@ -1,9 +1,8 @@
 * UNRELEASED: version 1.31
 
+   - support CIDR-style addresses in the client whitelist
    - improve logging of unresolveable hosts (Adrian von Bidder, Heiko
      Schlichting)
-   - exit non-zero on fatal error at startup (Peter Bieringer)
-     see also CPAN RT #28755
 
 * 2007-08-02: version 1.30
 

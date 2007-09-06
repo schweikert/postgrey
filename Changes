@@ -1,8 +1,11 @@
 * UNRELEASED: version 1.31
 
-   - support CIDR-style addresses in the client whitelist
+   - support CIDR-style addresses in the client whitelist (Claudio Strizzolo)
    - improve logging of unresolveable hosts (Adrian von Bidder, Heiko
      Schlichting)
+   - updated whitelist
+   - fix unix socket permission issues (Martin F Krafft, Adrian von Bidder,
+     Leos Bitto, Debian bug #376910)
 
 * 2007-08-02: version 1.30
 

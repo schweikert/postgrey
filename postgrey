@@ -627,6 +627,16 @@ sub sig_hup {
     $self->read_recipients_whitelists();
 }
 
+sub post_bind_hook()
+{
+    my ($self) = @_;
+
+    # unix socket permissions should be 666
+    if($self->{server}{port}[0] =~ /^(.*)\|unix$/) {
+        chmod 0666, $1;
+    }
+}
+
 sub pre_loop_hook()
 {
     my ($self) = @_;
@@ -639,11 +649,6 @@ sub pre_loop_hook()
 
     # write files with mode 600
     umask 0077;
-
-    # unix socket permissions should be 666
-    if($self->{server}{port}[0] =~ /^(.*)\|unix$/) {
-        chmod 0666, $1;
-    }
 
     # ensure that only one instance of postgrey is running
     my $lock = "$self->{server}{dbdir}/postgrey.lock";

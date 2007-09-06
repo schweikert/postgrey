@@ -176,3 +176,5 @@ rambler.ru
 lists.sourceforge.net
 # 2007-08-06: polytec.de (no retry, reported by Patrick McLean)
 polytec.de
+# 2007-09-06: qualiflow.com (no retry, reported by Alex Beckert)
+/^mail\d+\.msg\.oleane\.net$/

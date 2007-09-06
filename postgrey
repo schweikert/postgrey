@@ -319,10 +319,10 @@ sub is_new_instance($$)
 # main routine: based on attributes specified as argument, return policy decision
 sub smtpd_access_policy($$)
 {
-    my ($self, $attr) = @_;
+    my ($self, $now, $attr) = @_;
     my $db  = $self->{postgrey}{db};
-    my $now = time();
-    my $real_now = $now;
+    # This attribute occurs in connections from the policy-test script,
+    # not in a regular postfix query connection
     if(defined $attr->{policy_test_time}) { $now = $attr->{policy_test_time} }
 
     # whitelists
@@ -409,12 +409,6 @@ sub smtpd_access_policy($$)
     }
     else {
         $db->{$key}="$first,$now";
-    }
-
-    # do maintenance if one hour has passed since the last one
-    if($now-$self->{postgrey}{last_maint} >= 3600) {
-        $self->{postgrey}{last_maint} = $real_now;
-        $self->do_maintenance($real_now);
     }
 
     my $diff = $self->{postgrey}{delay} - ($now - $first);
@@ -709,10 +703,23 @@ sub mux_input()
                 $self->{net_server}->mylog(0, "unrecognized request type: '$attr->{request}'");
             }
             else {
+                my $now = time;
+
                 # decide
-                my $action = $self->{net_server}->smtpd_access_policy($attr);
+                my $action = $self->{net_server}->smtpd_access_policy($now, $attr);
+
                 # give answer
                 print $fh "action=$action\n\n";
+
+                # attempt maintenance if one hour has passed since the last one
+                my $server = $self->{net_server};
+                if($server->{postgrey}{last_maint} && 
+                    $now-$server->{postgrey}{last_maint} >= 3600)
+                {
+                    $server->{postgrey}{last_maint} = $now;
+                    $server->do_maintenance($now);
+                }
+
                 # close the filehandle if --exim is set
                 if ($self->{net_server}->{postgrey}{exim}) {
                     close($fh);

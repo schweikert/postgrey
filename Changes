@@ -1,4 +1,4 @@
-* UNRELEASED: version 1.31
+* 2007-09-06: version 1.31
 
    - support CIDR-style addresses in the client whitelist (Claudio Strizzolo)
    - improve logging of unresolveable hosts (Adrian von Bidder, Heiko

@@ -1,5 +1,5 @@
 MAJOR = 1
-MINOR = 31
+MINOR = 32
 VERSION = $(MAJOR).$(MINOR)
 
 all: version tag build

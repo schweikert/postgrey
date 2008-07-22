@@ -178,6 +178,12 @@ polytec.de
 /^mail\d+\.msg\.oleane\.net$/
 # 2007-09-07: nrl.navy.mil (no retry, reported by Axel Beckert)
 nrl.navy.mil
+# 2007-10-18: aliplast.com (long retry, reported by Johannes Feigl)
+mail.aliplast.com
+# 2007-10-18: inode.at (long retry, reported by Johannes Feigl)
+/^mx\d+\..*\.inode\.at$/
+# 2008-02-01: bol.com (no retry, reported by Frank Breedijk)
+/^.*?.server.arvato-systems.de$/
 # 2008-06-05: registeredsite.com (no retry, reported by Fred Kilbourn)
 /^(?:mail|fallback-mx)\d+.atl.registeredsite.com$/
 # 2008-07-17: mahidol.ac.th (no retry, reported by Alex Beckert)

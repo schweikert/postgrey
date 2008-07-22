@@ -146,6 +146,23 @@ sub do_sender_substitutions($$)
 
     my ($user, $domain) = split(/@/, $addr, 2);
     defined $domain or return $addr;
+
+    # BATV is defined as prvs=tag-val=loc-core@, but sometimes shows up
+    # as prvs=loc-core=tag-val@...
+    if ($user =~ /^prvs=/) {
+	my @a = split(/=/, $user);
+	if ($#a == 2) {
+	    if ($a[1] =~ /^[0-9a-z]{10}/ && $a[2] !~ /^[0-9a-z]{10}/) {
+		$user = $a[2];
+	    } elsif ($a[2] =~ /^[0-9a-z]{10}/ && $a[1] !~ /^[0-9a-z]{10}/) {
+		$user = $a[1];
+	    } else {
+		# throw a coin, pick the standard
+		$user = $a[2];
+	    }
+	}
+    }
+
     # strip extension, used sometimes for mailing-list VERP
     $user =~ s/\+.*//;
     # replace numbers in VERP addresses with '#' so that

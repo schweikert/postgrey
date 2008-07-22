@@ -2,6 +2,7 @@
 
    - fixed recipients whitelisting (David Carrel)
    - added --syslog-facility option (Peter Rabbitson)
+   - add support for BATV (Edwin Groothuis)
    - updated whitelist
 
 * 2007-09-06: version 1.31

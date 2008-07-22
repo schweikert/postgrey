@@ -176,6 +176,10 @@ lists.sourceforge.net
 polytec.de
 # 2007-09-06: qualiflow.com (no retry, reported by Alex Beckert)
 /^mail\d+\.msg\.oleane\.net$/
+# 2007-09-07: nrl.navy.mil (no retry, reported by Axel Beckert)
+nrl.navy.mil
+# 2008-06-05: registeredsite.com (no retry, reported by Fred Kilbourn)
+/^(?:mail|fallback-mx)\d+.atl.registeredsite.com$/
 # 2008-07-17: mahidol.ac.th (no retry, reported by Alex Beckert)
 saturn.mahidol.ac.th
 # 2008-07-18: ebay.com (big pool, reported by Peter Samuelson)

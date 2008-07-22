@@ -180,3 +180,5 @@ polytec.de
 /^mail\d+\.msg\.oleane\.net$/
 # 2008-07-17: mahidol.ac.th (no retry, reported by Alex Beckert)
 saturn.mahidol.ac.th
+# 2008-07-18: ebay.com (big pool, reported by Peter Samuelson)
+ebay.com

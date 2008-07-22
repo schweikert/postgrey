@@ -486,6 +486,7 @@ sub main()
         'user=s', 'group=s', 'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
         'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
+        'syslogfacility|syslog-facility|facility=s',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
         'hostname=s', 'exim', 'listen-queue-size=i'
     ) or exit(1);
@@ -564,7 +565,7 @@ sub main()
             log_level        => $opt{quiet} ? 1 : ($opt{verbose} ? 3 : 2),
             log_file         => $opt{daemonize} ? 'Sys::Syslog' : undef,
             syslog_logsock   => $syslog_logsock,
-            syslog_facility  => 'mail',
+            syslog_facility  => $opt{syslogfacility} || 'mail',
             syslog_ident     => 'postgrey',
             listen           => $opt{'listen-queue-size'} ? $opt{'listen-queue-size'} : undef,
         },
@@ -758,6 +759,7 @@ B<postgrey> [I<options>...]
  -h, --help              display this help and exit
      --version           output version information and exit
  -v, --verbose           increase verbosity level
+     --syslog-facility   Syslog facility to use (default mail)
  -q, --quiet             decrease verbosity level
  -u, --unix=PATH         listen on unix socket PATH
  -i, --inet=[HOST:]PORT  listen on PORT, localhost if HOST is not specified

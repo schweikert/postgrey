@@ -1,3 +1,8 @@
+* 2008-07-22: version 1.32
+
+   - added --syslog-facility option (Peter Rabbitson)
+   - updated whitelist
+
 * 2007-09-06: version 1.31
 
    - support CIDR-style addresses in the client whitelist (Claudio Strizzolo)

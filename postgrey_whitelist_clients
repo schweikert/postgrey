@@ -178,3 +178,5 @@ lists.sourceforge.net
 polytec.de
 # 2007-09-06: qualiflow.com (no retry, reported by Alex Beckert)
 /^mail\d+\.msg\.oleane\.net$/
+# 2008-07-17: mahidol.ac.th (no retry, reported by Alex Beckert)
+saturn.mahidol.ac.th

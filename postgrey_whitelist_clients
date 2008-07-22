@@ -5,8 +5,6 @@
 
 # greylisting.org: Southwest Airlines (unique sender, no retry)
 southwest.com
-# greylisting.org: Yahoo Groups servers (no retry)
-scd.yahoo.com
 # greylisting.org: isp.belgacom.be (wierd retry pattern)
 isp.belgacom.be
 # greylisting.org: Ameritrade (no retry)
@@ -182,3 +180,5 @@ polytec.de
 saturn.mahidol.ac.th
 # 2008-07-18: ebay.com (big pool, reported by Peter Samuelson)
 ebay.com
+# 2008-07-22: yahoo.com (big pool, reported by Juan Alonso)
+yahoo.com

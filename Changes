@@ -1,5 +1,6 @@
 * 2008-07-22: version 1.32
 
+   - fixed recipients whitelisting (David Carrel)
    - added --syslog-facility option (Peter Rabbitson)
    - updated whitelist
 

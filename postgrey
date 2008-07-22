@@ -127,7 +127,7 @@ sub read_recipients_whitelists($)
                 }
                 else {
                     # domain ($user is the domain)
-                    push @whitelist_recipients, qr{(?:^|\.)\Q$user\E$}i;
+                    push @whitelist_recipients, qr{(?:\@|\.)\Q$user\E$}i;
                 }
             }
         }

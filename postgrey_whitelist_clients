@@ -195,3 +195,5 @@ ebay.com
 yahoo.com
 # 2008-11-07: facebook (no retry, reported by Tim Freeman)
 /^outmail\d+\.sctm\.tfbnw\.net$/
+# 2009-02-10: server14.cyon.ch (long retry, reported by Alex Beckert)
+server14.cyon.ch

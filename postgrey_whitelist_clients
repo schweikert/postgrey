@@ -149,6 +149,7 @@ berlin.ptb.de
 registrarmail.net
 # google.com (big pool, reported by Matthias Dyer)
 /^.*-out-.*\.google\.com$/
+/^mail.*\.google\.com$/
 # orange.fr (big pool, reported by Loïc Le Loarer)
 /^smtp\d+\.orange\.fr$/
 # citigroup.com (slow retry, reported by Michael Monnerie)

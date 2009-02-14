@@ -192,3 +192,5 @@ saturn.mahidol.ac.th
 ebay.com
 # 2008-07-22: yahoo.com (big pool, reported by Juan Alonso)
 yahoo.com
+# 2008-11-07: facebook (no retry, reported by Tim Freeman)
+/^outmail\d+\.sctm\.tfbnw\.net$/

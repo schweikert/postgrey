@@ -147,9 +147,8 @@ ibm.com
 berlin.ptb.de
 # registrarmail.net (unique sender names, reported by Simon Waters)
 registrarmail.net
-# google.com (big pool, reported by Matthias Dyer)
-/^.*-out-.*\.google\.com$/
-/^mail.*\.google\.com$/
+# google.com (big pool, reported by Matthias Dyer, Martin Toft)
+google.com
 # orange.fr (big pool, reported by Loïc Le Loarer)
 /^smtp\d+\.orange\.fr$/
 # citigroup.com (slow retry, reported by Michael Monnerie)

@@ -629,6 +629,8 @@ It is best to run postgreyreport against a maillog that is at least several hour
 ( you be the judge on how old is acceptable ). if you run the report against a live maillog you are
 not giving legit MTA's enough time to try again and you will have lots of inaccurate information.
 
+=over
+
 =item * Ex usage:
 
 	zcat /var/log/maillog.0.gz | ./postgreyreport [options] > postgreyreport.log
@@ -664,6 +666,7 @@ not giving legit MTA's enough time to try again and you will have lots of inaccu
    MX                             legituser@mac.com                      user6@recipient7.com 
  :============================================================================================
 
+=back
 
 =head1 HISTORY
 

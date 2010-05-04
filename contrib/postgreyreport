@@ -10,7 +10,7 @@ use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
 use Net::Server::Daemonize qw( get_uid get_gid set_uid set_gid );
 use Pod::Usage;
 #use Net::RBLClient;
-my $VERSION='1.14.2 (20040715)';
+my $VERSION='1.14.3 (20100321)';
 
 # used in maillog processing
 my $RE_revdns_ip   	= qr/ ([^\[\s]+)\[(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\]/;	# ptr[1.2.3.4]
@@ -33,6 +33,8 @@ my %opt = (
 	separate_by_subnet	=> '',			# if not blank output this string for every new /24
 	separate_by_ip	   	=> '',			# if not blank output this string for every new IP
 	single_line	   	=> 1,			# output everything on a single line? (grouping enabled if false )
+	tab			=> 0,			# use tabs as separators, not spaces (only in single line mode)
+	show_time		=> 0,			# show entry time in maillog
 	
 	skip_dnsbl		=> [],			# list of DNSBL servers to check and skip reporting for
 	skip_clients		=> [],			# files of clients to skip reporting	
@@ -55,7 +57,7 @@ sub main
 		'show_tries', 
 		'check_sender=s',
 		'separate_by_subnet=s', 'separate_by_ip=s',  
-		'single_line!',
+		'single_line!', 'tab', 'show_time',
 		'skip_dnsbl=s@','skip_clients=s@', 'match_clients=s@', 'skip_pool', 
 		) or exit(1);
 	if($opt{help})     { pod2usage(1) }
@@ -136,13 +138,22 @@ sub postgrey_fatal_report()
 		# display output on single line or multi-line
 		if ($opt{single_line})
 		{
-			printf "%s ",  $triplets{$key}{counter}  	if($opt{show_tries})	;
-			printf "%5s ", $check_sender			if($opt{check_sender})	;
-			printf "%15s ", $ip							;
-			printf "%s ", $revdns							;
-			printf "%s ", $sender							;
-			printf "%s ", $recipient						;
-			print "\n"								;
+			if ($opt{tab}) {
+				printf "%s\t", $triplets{$key}{entrytime}	if($opt{show_time})	;
+				printf "%s\t", $triplets{$key}{counter}  	if($opt{show_tries})	;
+				printf "%s\t", $check_sender			if($opt{check_sender})	;
+				printf "%s\t", $ip							;
+				printf "%s\t", $revdns							;
+				printf "%s\t", $sender							;
+			} else {
+				printf "%s ", $triplets{$key}{entrytime}	if($opt{show_time})	;
+				printf "%s ", $triplets{$key}{counter}  	if($opt{show_tries})	;
+				printf "%5s ", $check_sender			if($opt{check_sender})	;
+				printf "%15s ", $ip							;
+				printf "%s ", $revdns							;
+				printf "%s ", $sender							;
+			}
+			printf "%s\n", $recipient;						;
 		} else 
 		{
 			### multi-line
@@ -235,7 +246,7 @@ sub find_and_sort_fatal
 		$triplets->{$key}{ipaddr}=$ipaddr;			# save IP in easy to access form
 		$triplets->{$key}{subnet}=$subnet;			# save subnet in easy to access form
 		$triplets->{$key}{subkey}=$subkey;			# save key in subnet form
-		
+		$triplets->{$key}{entrytime}=substr($_,0,15);
 		
 	}
 
@@ -593,6 +604,8 @@ B<postgreyreport> [I<options>...]
      --match_clients=FILE     *ONLY* report if fatal *AND* PTR/IP of client matches
      
      --show_tries	      display the number of attempts failed triplets made in first column
+     --show_time	      show entry time in maillog (single line only)
+     --tab		      use tabs as separators for easy cut(1)ting
 
      --nosingle_line	      display sender/recipients grouped by ptr - ip
      --separate_by_subnet=TXT display TXT for every new /24 (ex: "=================\n" )
@@ -670,6 +683,16 @@ not giving legit MTA's enough time to try again and you will have lots of inaccu
 
 =head1 HISTORY
 
+
+B<1.14.3  20100321>
+
+=over 4
+
+  Some additions, Leonard den Ottolander <leonard.den.ottolander.nl>
+  New option: --tab   Use tabs as separator in single line mode
+  New option: --show_time   Show entry time in maillog in single line mode
+
+=back
 
 B<1.14.2  20040715>
 

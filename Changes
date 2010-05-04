@@ -1,3 +1,9 @@
+* 2010-05-04: version 1.33
+
+   - contrib/postgrey.init: new LSB-compliant init script by Adrian von Bidder
+     (Debian)
+   - contrib/postgreyreport: fix POD error (Christian Perrier)
+
 * 2008-07-22: version 1.32
 
    - fixed recipients whitelisting (David Carrel)

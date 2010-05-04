@@ -842,6 +842,9 @@ Write an init script to start postgrey at boot and start it. Like this for examp
 
  postgrey --inet=10023 -d
 
+F<contrib/postgrey.init> in the postgrey source distribution includes a
+LSB-compliant init script by Adrian von Bidder for the Debian system.
+
 =item *
 
 Put something like this in /etc/main.cf:

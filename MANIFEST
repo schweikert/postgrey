@@ -7,3 +7,4 @@ COPYING
 README.exim
 README
 contrib/postgreyreport
+contrib/postgrey.init

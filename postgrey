@@ -41,6 +41,7 @@ sub cidr_match($$$)
 {
     my ($net, $mask, $addr) = @_;
     return undef unless defined $net and defined $mask and defined $addr;
+    return undef if ($addr =~ /:.*:/); # ignore IPv6 addresses
     if($addr =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
         $addr =  ($1<<24)+($2<<16)+($3<<8)+$4;
     }

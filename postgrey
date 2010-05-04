@@ -479,9 +479,14 @@ sub smtpd_access_policy($$)
 
         # add X-Greylist header
         my $date = strftime("%a, %d %b %Y %T %Z", localtime);
-        $self->mylog_action($attr, 'pass', 'triplet found', 'delay='.($now-$first));
-        return 'PREPEND X-Greylist: delayed '.($now-$first).
-            " seconds by postgrey-$VERSION at $self->{postgrey}{hostname}; $date";
+        my $delay = $now-$first;
+        $self->mylog_action($attr, 'pass', 'triplet found', 'delay='.($delay));
+        my $msg = $self->{postgrey}{x_greylist_header};
+        $msg =~ s/\%t/$delay/;
+        $msg =~ s/\%v/$VERSION/;
+        $msg =~ s/\%d/$date/;
+        $msg =~ s/\%h/$self->{postgrey}{hostname}/;
+        return 'PREPEND ' . $msg;
     }
 
     $self->mylog_action($attr, 'pass', 'triplet found');
@@ -505,7 +510,7 @@ sub main()
         'whitelist-clients=s@', 'whitelist-recipients=s@',
         'syslogfacility|syslog-facility|facility=s',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
-        'hostname=s', 'exim', 'listen-queue-size=i'
+        'hostname=s', 'exim', 'listen-queue-size=i', 'x-greylist-header=s',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
@@ -606,6 +611,7 @@ sub main()
             privacy => defined $opt{'privacy'},
             hostname => defined $opt{hostname} ? $opt{hostname} : hostname,
             exim => defined $opt{'exim'},
+            x_greylist_header  => $opt{'x-greylist-header'} || 'X-Greylist: delayed %t seconds by postgrey-%v at %h; %d',
         },
     }, 'postgrey';
 
@@ -805,6 +811,8 @@ B<postgrey> [I<options>...]
                                   whitelisted (turned on by default with value 5)
                                   specify N=0 to disable.
      --listen-queue-size=N        allow for N waiting connections to our socket
+     --x-greylist-header=TXT      header when a mail was delayed by greylisting
+                                  default: X-Greylist: delayed <seconds> seconds by postgrey-<version> at <server>; <date>
 
  Note that the --whitelist-x options can be specified multiple times,
  and that per default /etc/postfix/postgrey_whitelist_clients.local is
@@ -984,6 +992,36 @@ How many seconds left until the greylisting is over (300).
 =item %r
 
 Mail-domain of the recipient (example.com).
+
+=back
+
+=head2 Greylist Header
+
+When a message is greylisted, an additional header can be prepended to the
+header section of the mail:
+
+ X-Greylist: delayed %t seconds by postgrey-%v at %h; %d
+
+You can change the text with the B<--x-greylist-header> parameter. The
+following special variables will be replaced in the text:
+
+=over 4
+
+=item %t
+
+How many seconds the mail has been delayed due to greylisting. 
+
+=item %v
+
+The version of postgrey.
+
+=item %d
+
+The date.
+
+=item %h
+
+The host.
 
 =back
 

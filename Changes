@@ -1,5 +1,6 @@
 * 2010-05-04: version 1.33
 
+   - added --x-greylist-header option (Guido Leisker)
    - contrib/postgrey.init: new LSB-compliant init script by Adrian von Bidder
      (Debian)
    - contrib/postgreyreport: fix POD error (Christian Perrier)

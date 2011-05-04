@@ -383,7 +383,7 @@ sub smtpd_access_policy($$)
         # whitelist if count is enough
         if(defined $cawl_count and $cawl_count >= $self->{postgrey}{awl_clients})
         {
-            if($now >= $cawl_last+3600) {
+            if(($now >= $cawl_last+3600) or ($cawl_last > $now)) {
                 $cawl_count++; # for statistics
                 $cawl_db->{$cawl_key}=$cawl_count.','.$now;
             }
@@ -415,6 +415,11 @@ sub smtpd_access_policy($$)
             # discard stored first-seen if it is the first retrial and
             # it is beyond the retry_window
             $first = $now if $now-$first > $self->{postgrey}{retry_window};
+        }
+        # test for invalid first-seen date in the future
+        if($first > $now) {
+            $self->mylog(1, "correcting date for first seen in the future!");
+            $first = $now;
         }
     }
     else {

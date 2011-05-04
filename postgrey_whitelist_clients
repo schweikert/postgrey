@@ -208,3 +208,7 @@ ms4-1.1blu.de
 /^viefep\d+-int\.chello\.at$/
 # 2010-05-31: nic.nu (long retry, reported by Ivan Sie)
 mx.nic.nu
+# 2010-06-10: Microsoft servers (long/no retry, reported by Roy McMorran)
+bigfish.com
+frontbridge.com
+microsoft.com

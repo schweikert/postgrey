@@ -1,6 +1,7 @@
-MAJOR = 1
-MINOR = 33
-VERSION = $(MAJOR).$(MINOR)
+MAJOR   := 1
+MINOR   := 33
+VERSION := $(MAJOR).$(MINOR)
+DATE    := $(shell date +%Y-%m-%d)
 
 all: version tag build
 
@@ -13,6 +14,8 @@ tag:
 build:
 	mkdir -p postgrey-$(VERSION)
 	tar cf - --files-from MANIFEST | (cd postgrey-$(VERSION) && tar xf -)
+	perl -pi -e 's{##VERSION##}{$(VERSION)}' postgrey-$(VERSION)/postgrey_whitelist_*
+	perl -pi -e 's{##DATE##}{$(DATE)}' postgrey-$(VERSION)/postgrey_whitelist_*
 	[ -d pub ] || mkdir pub
 	tar czf pub/postgrey-$(VERSION).tar.gz postgrey-$(VERSION)
 	rm -r postgrey-$(VERSION)

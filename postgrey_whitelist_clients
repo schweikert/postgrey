@@ -2,6 +2,8 @@
 # --------------------------------------------
 # put this file in /etc/postfix or specify its path
 # with --whitelist-clients=xxx
+#
+# postgrey version: ##VERSION##, build date: ##DATE##
 
 # greylisting.org: Southwest Airlines (unique sender, no retry)
 southwest.com
@@ -204,3 +206,5 @@ home.theory.tifr.res.in
 ms4-1.1blu.de
 # 2010-03-17: chello.at (big pool, reported by Jan-willem van Eys)
 /^viefep\d+-int\.chello\.at$/
+# 2010-05-31: nic.nu (long retry, reported by Ivan Sie)
+mx.nic.nu

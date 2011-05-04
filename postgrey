@@ -375,7 +375,7 @@ sub smtpd_access_policy($$)
         $cawl_db  = $self->{postgrey}{db_cawl};
         $cawl_key = $attr->{client_address};
         if ($self->{postgrey}{privacy}) {
-             $cawl_key = Digest::SHA1::sha1_hex($cawl_key);
+             $cawl_key = Digest::SHA::sha1_hex($cawl_key);
         }
         my $cawl_val = $cawl_db->{$cawl_key};
         ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
@@ -398,7 +398,7 @@ sub smtpd_access_policy($$)
         $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
     my $key    = lc "$client_net/$sender/$attr->{recipient}";
     if ($self->{postgrey}{privacy}) {
-        $key = Digest::SHA1::sha1_hex($key);
+        $key = Digest::SHA::sha1_hex($key);
     }
     my $val    = $db->{$key};
     my $first;
@@ -623,9 +623,9 @@ sub main()
     $server->read_clients_whitelists();
     $server->read_recipients_whitelists();
 
-    # --privacy requires Digest::SHA1
+    # --privacy requires Digest::SHA
     if($opt{'privacy'}) {
-        require Digest::SHA1;
+        require Digest::SHA;
     }
 
     $0 = join(' ', @{$server->{server}{commandline}});

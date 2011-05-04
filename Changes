@@ -1,6 +1,7 @@
 * 2011-05-XX: version 1.34
 
    - updated whitelist
+   - replaced obsolete Digest::SHA1 with Digest::SHA (Salvatore Bonaccorso)
 
 * 2010-05-04: version 1.33
 

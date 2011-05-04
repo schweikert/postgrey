@@ -12,6 +12,7 @@ Requirements
 - IO::Multiplex (Perl Module)
 - BerkeleyDB (Perl Module)
 - Berkeley DB >= 4.1 (Library)
+- Digest::SHA (Perl Module, only for --privacy option)
 
 
 Documentation

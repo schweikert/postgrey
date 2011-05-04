@@ -1,3 +1,7 @@
+* 2011-05-XX: version 1.34
+
+   - updated whitelist
+
 * 2010-05-04: version 1.33
 
    - fix warning with IPv6 address (Edwin Kremer)

@@ -214,3 +214,5 @@ frontbridge.com
 microsoft.com
 # 2010-06-18: Google/Postini (big pool, reported by Warren Trakman)
 postini.com
+# 2011-02-04: evanzo-server.de (no retry, reported by Andre Hoepner)
+/^mx.*\.evanzo-server\.de$/

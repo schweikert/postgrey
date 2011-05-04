@@ -216,3 +216,5 @@ microsoft.com
 postini.com
 # 2011-02-04: evanzo-server.de (no retry, reported by Andre Hoepner)
 /^mx.*\.evanzo-server\.de$/
+# 2011-05-02: upcmail.net (big pool, reported by Michael Monnerie)
+upcmail.net

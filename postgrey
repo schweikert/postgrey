@@ -557,6 +557,16 @@ sub main()
     if($opt{dbdir}) {
         $opt{dbdir} =~ /^(.*)$/; $opt{dbdir} = $1;
     }
+    # untaint what is given on --pidfile. It is not security sensitive since
+    # it is provided by the admin
+    if($opt{pidfile}) {
+        $opt{pidfile} =~ /^(.*)$/; $opt{pidfile} = $1;
+    }
+    # untaint what is given on --inet. It is not security sensitive since
+    # it is provided by the admin
+    if($opt{inet}) {
+        $opt{inet} =~ /^(.*)$/; $opt{inet} = $1;
+    }
 
     # determine proper "logsock" for Sys::Syslog
     my $syslog_logsock;

@@ -1,5 +1,5 @@
 MAJOR   := 1
-MINOR   := 34
+MINOR   := 35
 VERSION := $(MAJOR).$(MINOR)
 DATE    := $(shell date +%Y-%m-%d)
 
@@ -9,7 +9,7 @@ version:
 	perl -pi -e 's|^my \$$VERSION.*|my \$$VERSION = '"'"'$(VERSION)'"'"';|' postgrey
 
 tag:
-	hg tag version-$(MAJOR).$(MINOR)
+	git tag version-$(MAJOR).$(MINOR)
 
 build:
 	mkdir -p postgrey-$(VERSION)

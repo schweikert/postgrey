@@ -220,3 +220,5 @@ postini.com
 upcmail.net
 # 2013-12-18: orange.fr (big pool, reported by fulax)
 /^smtp\d+\.smtpout\.orange\.fr$/
+# 2014-02-01: startcom.org (long retry, reported by jweiher)
+gateway.startcom.org

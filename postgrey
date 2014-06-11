@@ -592,7 +592,7 @@ sub main()
     # create Net::Server object and run it
     my $server = bless {
         server => {
-            commandline      => [ $0, @ARGV_saved ],
+            commandline      => [ 'postgrey', @ARGV_saved ],
             port             => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto            => $opt{inet} ? 'tcp' : 'unix',
             user             => $opt{user} || 'postgrey',

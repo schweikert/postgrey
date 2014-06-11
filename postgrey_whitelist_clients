@@ -218,3 +218,5 @@ postini.com
 /^mx.*\.evanzo-server\.de$/
 # 2011-05-02: upcmail.net (big pool, reported by Michael Monnerie)
 upcmail.net
+# 2013-12-18: orange.fr (big pool, reported by fulax)
+/^smtp\d+\.smtpout\.orange\.fr$/

@@ -1,6 +1,7 @@
 * 2014-06-11: version 1.35
    - use just 'postgrey' as process name, instead of '/usr/sbin/postgrey', because
      Linux tools are limited to 15 characters (#5)
+   - Make postgrey work with Perl 5.18 (Yasuhiro KIMURA, #4)
    - updated whitelist
 
 * 2011-05-04: version 1.34

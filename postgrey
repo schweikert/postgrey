@@ -18,6 +18,7 @@ use Fcntl ':flock'; # import LOCK_* constants
 use Sys::Hostname;
 use Sys::Syslog; # used only to find out which version we use
 use POSIX qw(strftime setlocale LC_ALL);
+use Net::DNS; # for DNSWL.org whitelisting
 
 use vars qw(@ISA);
 @ISA = qw(Net::Server::Multiplex);
@@ -25,6 +26,8 @@ use vars qw(@ISA);
 my $VERSION = '1.35';
 my $DEFAULT_DBDIR = '/var/spool/postfix/postgrey';
 my $CONFIG_DIR = '/etc/postfix';
+
+my $dns_resolver = Net::DNS::Resolver->new;
 
 sub cidr_parse($)
 {
@@ -46,6 +49,36 @@ sub cidr_match($$$)
         $addr =  ($1<<24)+($2<<16)+($3<<8)+$4;
     }
     return ($addr & $mask) == $net;
+}
+
+sub reverseDottedQuad {
+    # This is the sub _chkValidPublicIP from Net::DNSBL by PJ Goodwin
+    # at http://www.the42.net/net-dnsbl.
+    my ($quad) = @_;
+    if ($quad =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+        my ($ip1,$ip2,$ip3,$ip4) = ($1, $2, $3, $4);
+        if (
+           $ip1 == 10 ||                               #10.0.0.0/8 (10/8)
+          ($ip1 == 172 && $ip2 >= 16 && $ip2 <= 31) || #172.16.0.0/12 (172.16/12)
+          ($ip1 == 192 && $ip2 == 168) ||              #192.168.0.0/16 (192.168/16)
+           $quad eq '127.0.0.1'                        # localhost
+           ) {
+            # toss the RFC1918 specified privates
+            return undef;
+        } elsif (
+          ($ip1 <= 1 || $ip1 > 254) ||
+          ($ip2 < 0  || $ip2 > 255) ||
+          ($ip3 < 0  || $ip3 > 255) ||
+          ($ip4 < 0  || $ip4 > 255)
+           ) {
+            #invalid oct, toss it;
+            return undef;
+        }
+        my $revquad = $ip4 . "." . $ip3 . "." . $ip2 . "." . $ip1;
+        return $revquad;
+    } else { # invalid quad
+        return undef;
+    }
 }
 
 sub read_clients_whitelists($)
@@ -366,6 +399,25 @@ sub smtpd_access_policy($$)
         if($attr->{recipient} =~ $w) {
             $self->mylog_action($attr, 'pass', 'recipient whitelist');
             return 'DUNNO';
+        }
+    }
+
+    # whitelist clients in dnswl.org
+    my $revip = reverseDottedQuad($attr->{client_address});
+    if ($revip) { # valid IP / plausibly in DNSWL
+        my $answer = $dns_resolver->send($revip . '.list.dnswl.org');
+        if ($answer && scalar($answer->answer) > 0) {
+            my @rrs = $answer->answer;
+            if ($rrs[0]->type eq 'A' && $rrs[0]->address ne '127.0.0.255') {
+                # Address appears in DNSWL. (127.0.0.255 means we were rate-limited.)
+                my $code = $rrs[0]->address;
+		if ($code =~ /^127.0.(\d+)\.([0-3])$/) {
+                    my %dnswltrust = (0 => 'legitimate', 1 => 'occasional spam', 2 => 'rare spam', 3 => 'highly unlikely to send spam');
+                    $code = $2 . '/' . $dnswltrust{$2};
+                }
+                $self->mylog_action($attr, 'pass', 'client whitelisted by dnswl.org (' . $code . ')');
+                return 'DUNNO';
+            }
         }
     }
 

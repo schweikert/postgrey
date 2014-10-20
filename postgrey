@@ -510,7 +510,8 @@ sub main()
     # parse options
     my %opt = ();
     GetOptions(\%opt, 'help|h', 'man', 'version', 'noaction|no-action|n',
-        'verbose|v', 'quiet|q', 'daemonize|d', 'unix|u=s', 'inet|i=s',
+        'verbose|v', 'quiet|q', 'daemonize|d',
+        'unix|u=s', 'inet|i=s', 'socketmode=s',
         'user=s', 'group=s', 'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
         'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
@@ -567,6 +568,11 @@ sub main()
     if($opt{inet}) {
         $opt{inet} =~ /^(.*)$/; $opt{inet} = $1;
     }
+    # untaint what is given on --socketmode. It is not security sensitive since
+    # it is provided by the admin
+    if($opt{socketmode}) {
+        $opt{socketmode} =~ /^(.*)$/; $opt{socketmode} = $1;
+    }
 
     # determine proper "logsock" for Sys::Syslog
     my $syslog_logsock;
@@ -595,6 +601,7 @@ sub main()
             commandline      => [ 'postgrey', @ARGV_saved ],
             port             => [ $opt{inet} ? $opt{inet} : $opt{unix}."|unix" ],
             proto            => $opt{inet} ? 'tcp' : 'unix',
+            socketmode       => $opt{socketmode} || '0666',
             user             => $opt{user} || 'postgrey',
             group            => $opt{group} || 'nogroup',
             dbdir            => $opt{dbdir} || $DEFAULT_DBDIR,
@@ -665,9 +672,9 @@ sub post_bind_hook()
 {
     my ($self) = @_;
 
-    # unix socket permissions should be 666
+    # set unix socket permissions
     if($self->{server}{port}[0] =~ /^(.*)\|unix$/) {
-        chmod 0666, $1;
+        chmod oct($self->{server}{socketmode}), $1;
     }
 }
 
@@ -801,6 +808,7 @@ B<postgrey> [I<options>...]
      --syslog-facility   Syslog facility to use (default mail)
  -q, --quiet             decrease verbosity level
  -u, --unix=PATH         listen on unix socket PATH
+     --socketmode=MODE   unix socket permission (default 0666)
  -i, --inet=[HOST:]PORT  listen on PORT, localhost if HOST is not specified
  -d, --daemonize         run in the background
      --pidfile=PATH      put daemon pid into this file

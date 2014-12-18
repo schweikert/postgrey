@@ -227,3 +227,5 @@ mout-xforward.kundenserver.de
 mout-xforward.perfora.net
 # 2014-02-01: startcom.org (long retry, reported by jweiher)
 gateway.startcom.org
+# 2014-12-18: bluewin.ch (1 try and reject mails with "453 Remote side deferred recipient")
+bluewin.ch

@@ -151,7 +151,7 @@ berlin.ptb.de
 registrarmail.net
 # google.com (big pool, reported by Matthias Dyer, Martin Toft)
 google.com
-# orange.fr (big pool, reported by Loïc Le Loarer)
+# orange.fr (big pool, reported by LoÃ¯c Le Loarer)
 /^smtp\d+\.orange\.fr$/
 # citigroup.com (slow retry, reported by Michael Monnerie)
 /^smtp\d+.citigroup.com$/
@@ -227,3 +227,5 @@ mout-xforward.kundenserver.de
 mout-xforward.perfora.net
 # 2014-02-01: startcom.org (long retry, reported by jweiher)
 gateway.startcom.org
+# French tax authority, no retry
+dgfip.finances.gouv.fr 

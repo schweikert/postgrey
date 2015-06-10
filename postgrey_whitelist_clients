@@ -229,3 +229,5 @@ mout-xforward.perfora.net
 gateway.startcom.org
 # French tax authority, no retry
 dgfip.finances.gouv.fr 
+# 2015-06-10 magisto.com (requested by postmaster)
+/^o\d+\.ntdc\.magisto\.com$/

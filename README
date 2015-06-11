@@ -13,7 +13,7 @@ Requirements
 - BerkeleyDB (Perl Module)
 - Berkeley DB >= 4.1 (Library)
 - Digest::SHA (Perl Module, only for --privacy option)
-
+- Net::DNS (Perl Module)
 
 Documentation
 -------------

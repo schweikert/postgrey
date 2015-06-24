@@ -11,6 +11,8 @@ package postgrey;
 use strict;
 use Pod::Usage;
 use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
+use Net::IP;
+use NetAddr::IP;
 use Net::Server; # used only to find out which version we use
 use Net::Server::Multiplex;
 use BerkeleyDB;
@@ -181,12 +183,21 @@ sub do_client_substitutions($$$)
         return ($ip, undef);
     }
 
-    my @ip=split(/\./, $ip);
-    return ($ip, undef) unless defined $ip[3];
-    # skip if it contains the last two IP numbers in the hostname
-    # (we assume it is a pool of dialup addresses of a provider)
-    return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
-    return (join('.', @ip[0..2], '0'), $ip[3]);
+    my $ipaddr = new Net::IP($ip) or return ($ip, undef);
+    if($ipaddr->version == 4) {
+
+      my @ip=split(/\./, $ip);
+      return ($ip, undef) unless defined $ip[3];
+      # skip if it contains the last two IP numbers in the hostname
+      # (we assume it is a pool of dialup addresses of a provider)
+      return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
+
+      $ipaddr = new NetAddr::IP($ip . '/' . $self->{postgrey}{ipv4cidr});
+    }
+    else {
+      $ipaddr = new6 NetAddr::IP($ip . '/' . $self->{postgrey}{ipv6cidr});
+    };
+    return ($ipaddr->network, undef);
 }
 
 sub mylog($$$)
@@ -513,7 +524,7 @@ sub main()
         'verbose|v', 'quiet|q', 'daemonize|d',
         'unix|u=s', 'inet|i=s', 'socketmode=s',
         'user=s', 'group=s', 'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'lookup-by-host', 'auto-whitelist-clients:s', 
+        'lookup-by-subnet', 'lookup-by-host', 'ipv4cidr=i', 'ipv6cidr=i', 'auto-whitelist-clients:s', 
         'whitelist-clients=s@', 'whitelist-recipients=s@',
         'syslogfacility|syslog-facility|facility=s',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
@@ -620,6 +631,8 @@ sub main()
             last_maint       => time,
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
+            ipv4cidr         => $opt{'ipv4cidr'} || 24,
+            ipv6cidr         => $opt{'ipv6cidr'} || 64,            
             awl_clients      => defined $opt{'auto-whitelist-clients'} ?
                 ($opt{'auto-whitelist-clients'} ne '' ?
                     $opt{'auto-whitelist-clients'} : 5) : 5,
@@ -823,7 +836,9 @@ B<postgrey> [I<options>...]
      --greylist-action=A if greylisted, return A to Postfix (default: DEFER_IF_PERMIT)
      --greylist-text=TXT response when a mail is greylisted
                          (default: Greylisted + help url, see below)
-     --lookup-by-subnet  strip the last 8 bits from IP addresses (default)
+     --lookup-by-subnet  strip the last N bits from IP addresses, determined by ipv4cidr and ipv6cidr (default)
+     --ipv4cidr=N        What cidr to use for the subnet on IPv4 addresses when using lookup-by-subnet (default: 24)
+     --ipv6cidr=N        What cidr to use for the subnet on IPv6 addresses when using lookup-by-subnet (default: 64)
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --privacy           store data using one-way hash functions
      --hostname=NAME     set the hostname (default: `hostname`)

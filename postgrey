@@ -11,7 +11,6 @@ package postgrey;
 use strict;
 use Pod::Usage;
 use Getopt::Long 2.25 qw(:config posix_default no_ignore_case);
-use Net::IP;
 use NetAddr::IP;
 use Net::Server; # used only to find out which version we use
 use Net::Server::Multiplex;
@@ -183,20 +182,25 @@ sub do_client_substitutions($$$)
         return ($ip, undef);
     }
 
-    my $ipaddr = new Net::IP($ip) or return ($ip, undef);
-    if($ipaddr->version == 4) {
+    my $ipaddr;
+    if($ip =~ /\./) {
+        # IPv4
+        my @ip=split(/\./, $ip);
+        return ($ip, undef) unless defined $ip[3];
+        # skip if it contains the last two IP numbers in the hostname
+        # (we assume it is a pool of dialup addresses of a provider)
+        return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
 
-      my @ip=split(/\./, $ip);
-      return ($ip, undef) unless defined $ip[3];
-      # skip if it contains the last two IP numbers in the hostname
-      # (we assume it is a pool of dialup addresses of a provider)
-      return ($ip, undef) if $revdns =~ /$ip[2]/ and $revdns =~ /$ip[3]/;
-
-      $ipaddr = new NetAddr::IP($ip . '/' . $self->{postgrey}{ipv4cidr});
+        $ipaddr = NetAddr::IP->new($ip, $self->{postgrey}{ipv4cidr});
+    }
+    elsif($ip =~ /:/) {
+        # IPv6
+        $ipaddr = NetAddr::IP->new($ip, $self->{postgrey}{ipv6cidr});
     }
     else {
-      $ipaddr = new6 NetAddr::IP($ip . '/' . $self->{postgrey}{ipv6cidr});
-    };
+        warn "doesn't look like an IP address: $ipaddr\n";
+        return ($ip, undef);
+    }
     return ($ipaddr->network, undef);
 }
 

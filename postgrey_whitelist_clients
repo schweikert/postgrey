@@ -144,7 +144,7 @@ flymonarch.com
 # ibm.com (big pool, reported by Casey Peel)
 ibm.com
 # messagelabs.com (big pool, reported by John Tobin)
-/^mail\d+\.messagelabs\.com$/
+messagelabs.com
 # ptb.de (slow, reported by Joachim Schoenberg)
 berlin.ptb.de
 # registrarmail.net (unique sender names, reported by Simon Waters)

@@ -231,5 +231,7 @@ gateway.startcom.org
 /^fallback\d+\.mail\.ru$/
 # French tax authority, no retry
 dgfip.finances.gouv.fr 
-# 2015-06-10 magisto.com (requested by postmaster)
+# 2015-06-10: magisto.com (requested by postmaster)
 /^o\d+\.ntdc\.magisto\.com$/
+# 2015-07-23: outlook.com (github #20)
+outlook.com

@@ -2,6 +2,8 @@
    - improved support for IPv6 addresses: new --ipv4cidr and --ipv6cidr options
      for proper subnetting of IPv6 (Håvard Moen, BenediktS)
    - updated whitelist
+   - user-settable unix socket permission: --socketmode (Teubel György)
+   - init script fixes (Sacha Ott)
 
 * 2014-06-11: version 1.35
    - use just 'postgrey' as process name, instead of '/usr/sbin/postgrey', because

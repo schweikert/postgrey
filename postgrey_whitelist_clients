@@ -235,3 +235,5 @@ dgfip.finances.gouv.fr
 /^o\d+\.ntdc\.magisto\.com$/
 # 2015-07-23: outlook.com (github #20)
 outlook.com
+# 2015-08-19 (the retrying is failing)
+mail.alibaba.com

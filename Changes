@@ -1,4 +1,4 @@
-* unreleased
+* 2015-09-01: version 1.36
    - improved support for IPv6 addresses: new --ipv4cidr and --ipv6cidr options
      for proper subnetting of IPv6 (Håvard Moen, BenediktS)
    - updated whitelist

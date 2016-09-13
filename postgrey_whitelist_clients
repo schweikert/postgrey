@@ -225,8 +225,6 @@ mout-xforward.gmx.net
 mout-xforward.web.de
 mout-xforward.kundenserver.de
 mout-xforward.perfora.net
-# 2014-02-01: startcom.org (long retry, reported by jweiher)
-gateway.startcom.org
 # 2014-12-18: mail.ru (retries from fallback*.mail.ru, reported by Andriy Yurchuk)
 /^fallback\d+\.mail\.ru$/
 # French tax authority, no retry

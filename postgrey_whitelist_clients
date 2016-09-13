@@ -238,3 +238,5 @@ outlook.com
 # 2015-08-19 (big pool)
 mail.alibaba.com
 mail.aliyun.com
+# 2016-09-13: amazonses.com (github #35, #37)
+smtp-out.amazonses.com

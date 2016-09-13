@@ -240,3 +240,5 @@ mail.alibaba.com
 mail.aliyun.com
 # 2016-09-13: amazonses.com (github #35, #37)
 smtp-out.amazonses.com
+# 2016-09-13: startcom.org (github #7)
+startcom.org

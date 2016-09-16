@@ -3,6 +3,7 @@
      also the naming of some big hosters like facebook (#32, Michal Petrucha,
      Andrew Ayer, Jon Sailor)
    - updated whitelist
+   - fix early logging of errors and warnings to syslog
  
 * 2015-09-01: version 1.36
    - improved support for IPv6 addresses: new --ipv4cidr and --ipv6cidr options

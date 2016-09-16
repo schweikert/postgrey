@@ -652,6 +652,12 @@ sub main()
     # max_age is in days
     $server->{postgrey}{max_age}*=3600*24;
 
+    # be sure to put in syslog any warnings / fatal errors
+    if(defined $server->{server}{log_file} and $server->{server}{log_file} eq 'Sys::Syslog') {
+        $SIG{__WARN__} = sub { Sys::Syslog::syslog('warning', '%s', "WARNING: $_[0]") };
+        $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', '%s', "FATAL: $_[0]"); die @_; };
+    }
+
     # read whitelist
     $server->read_clients_whitelists();
     $server->read_recipients_whitelists();
@@ -692,12 +698,6 @@ sub post_bind_hook()
 sub pre_loop_hook()
 {
     my ($self) = @_;
-
-    # be sure to put in syslog any warnings / fatal errors
-    if($self->{server}{log_file} eq 'Sys::Syslog') {
-        $SIG{__WARN__} = sub { Sys::Syslog::syslog('warning', '%s', "WARNING: $_[0]") };
-        $SIG{__DIE__}  = sub { Sys::Syslog::syslog('crit', '%s', "FATAL: $_[0]"); die @_; };
-    }
 
     # write files with mode 600
     umask 0077;

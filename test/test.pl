@@ -8,7 +8,7 @@ use lib '.';
 use Test_Greylist;
 use Test_Whitelists;
 
-plan tests => 4 + $Test_Greylist::tests;
+plan tests => 4 + $Test_Greylist::tests + $Test_Whitelists::tests;
 
 my $tmpdir = File::Temp->newdir();
 my $sock_path = "$tmpdir/postgrey.sock";
@@ -32,7 +32,7 @@ ok(kill(0, $pid), "postgrey is running") or done_testing, exit;
 
 # Run tests in modules
 Test_Greylist::run_tests($sock_path);
-#Test_Whitelists::run_tests($sock_path);
+Test_Whitelists::run_tests($sock_path);
 
 # Stop postgrey and verify that it stopped
 kill('TERM', $pid);

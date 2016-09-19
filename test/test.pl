@@ -14,6 +14,11 @@ my $tmpdir = File::Temp->newdir();
 my $sock_path = "$tmpdir/postgrey.sock";
 my $pid_path = "$tmpdir/postgrey.pid";
 
+# Are we started in the root directory of the project? chdir to 'test'
+if(-d 'test') {
+    chdir('test') or die "ERROR: can't chdir to test: $!\n";
+}
+
 # Start postgrey
 system("./test-wrapper.sh -d --pidfile=$pid_path " .
            "--dbdir=$tmpdir --unix=$sock_path " .

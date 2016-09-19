@@ -1,0 +1,7 @@
+# travis-ci.org configuration
+# 
+language: perl
+perl:
+    - "5.22"
+script:
+    - test/test.pl

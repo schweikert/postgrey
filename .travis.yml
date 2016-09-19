@@ -3,5 +3,8 @@
 language: perl
 perl:
     - "5.22"
+install:
+    - cpanm install --quiet --notest BerkeleyDB
+    - cpanm install --quiet --notest Net::Server::Multiplex
 script:
     - test/test.pl

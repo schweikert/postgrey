@@ -4,7 +4,10 @@ language: perl
 perl:
     - "5.22"
 install:
+    - apt-get install libdb libdb-dev
     - cpanm install --quiet --notest BerkeleyDB
     - cpanm install --quiet --notest Net::Server::Multiplex
+    - cpanm install --quiet --notest NetAddr::IP
+    - cpanm install --quiet --notest File::Slurper
 script:
     - test/test.pl

@@ -3,6 +3,7 @@
      also the naming of some big hosters like facebook (#32, Michal Petrucha,
      Andrew Ayer, Jon Sailor)
    - updated whitelist
+   - add whitelist for Office 365 (Holger Stember)
    - fix early logging of errors and warnings to syslog
    - simplified IP matching code
    - added support for IPv6 whitelists with netmask

@@ -7,7 +7,6 @@ addons:
     apt:
         packages:
             - libdb-dev
-            - libdb5.1
 install:
     - cpanm install --quiet --notest BerkeleyDB
     - cpanm install --quiet --notest Net::Server::Multiplex

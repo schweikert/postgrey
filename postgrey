@@ -27,28 +27,6 @@ my $VERSION = '1.36';
 my $DEFAULT_DBDIR = '/var/spool/postfix/postgrey';
 my $CONFIG_DIR = '/etc/postfix';
 
-sub cidr_parse($)
-{
-    defined $_[0] or return undef;
-    $_[0] =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)\/(\d+)$/ or return undef;
-    $1 < 256 and $2 < 256 and $3 < 256 and $4 < 256 and $5 <= 32 and $5 > 0
-    	or return undef;
-    my $net = ($1<<24)+($2<<16)+($3<<8)+$4;
-    my $mask = ~((1<<(32-$5))-1);
-    return ($net & $mask, $mask);
-}
-
-sub cidr_match($$$)
-{
-    my ($net, $mask, $addr) = @_;
-    return undef unless defined $net and defined $mask and defined $addr;
-    return undef if ($addr =~ /:.*:/); # ignore IPv6 addresses
-    if($addr =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
-        $addr =  ($1<<24)+($2<<16)+($3<<8)+$4;
-    }
-    return ($addr & $mask) == $net;
-}
-
 sub read_clients_whitelists($)
 {
     my ($self) = @_;

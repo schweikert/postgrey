@@ -14,4 +14,4 @@ install:
     - cpanm install --quiet --notest NetAddr::IP
     - cpanm install --quiet --notest File::Slurper
 script:
-    - perl test/test.pl
+    - cd test; perl test.pl

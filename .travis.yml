@@ -10,6 +10,7 @@ addons:
             - libdb-dev
 install:
     - cpanm install --quiet --notest BerkeleyDB
+    - cpanm install --quiet --notest IO::Multiplex
     - cpanm install --quiet --notest Net::Server::Multiplex
     - cpanm install --quiet --notest NetAddr::IP
     - cpanm install --quiet --notest File::Slurper

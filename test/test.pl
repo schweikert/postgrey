@@ -1,11 +1,12 @@
 #!/usr/bin/perl -w
 
+use lib '.';
+use local::lib;
+
 use Test::More;
 use File::Temp;
 use File::Slurper;
 
-use lib '.';
-use local::lib;
 use Test_Greylist;
 use Test_Whitelists;
 

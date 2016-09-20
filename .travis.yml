@@ -1,7 +1,6 @@
 # travis-ci.org configuration
 # 
 language: perl
-sudo: false
 perl:
     - "5.20"
 addons:

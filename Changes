@@ -4,6 +4,8 @@
      Andrew Ayer, Jon Sailor)
    - updated whitelist
    - fix early logging of errors and warnings to syslog
+   - simplified IP matching code
+   - added support for IPv6 whitelists with netmask
  
 * 2015-09-01: version 1.36
    - improved support for IPv6 addresses: new --ipv4cidr and --ipv6cidr options

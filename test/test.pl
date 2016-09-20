@@ -3,10 +3,12 @@
 use lib '.';
 use lib "$ENV{HOME}/perl5/lib/perl5";
 
+use strict;
 use Test::More;
 use File::Temp;
 use File::Slurper;
 
+use PostgreyTestClient;
 use Test_Greylist;
 use Test_Whitelists;
 
@@ -37,9 +39,12 @@ ok(defined $pid, "pid file generated") or done_testing, exit;
 chomp($pid);
 ok(kill(0, $pid), "postgrey is running") or done_testing, exit;
 
+# Initialize test client
+my $client = PostgreyTestClient->new($sock_path);
+
 # Run tests in modules
-Test_Greylist::run_tests($sock_path);
-Test_Whitelists::run_tests($sock_path);
+Test_Greylist::run_tests($client);
+Test_Whitelists::run_tests($client);
 
 # Stop postgrey and verify that it stopped
 kill('TERM', $pid);

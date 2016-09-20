@@ -1,37 +1,61 @@
 package Test_Greylist;
+
+use strict;
 use Test::More;
-use PostgreyRequest qw(request);
 use Time::HiRes;
 
-our $tests = 4;
+our $tests = 8;
 
 sub run_tests {
-    my ($socket_path) = @_;
+    my ($client) = @_;
 
     # Make first request (should be greylisted)
     {
-        my $reply = request($socket_path, {
+        my $reply = $client->request({
             client_name    => 'test1.example.com',
             client_address => '192.168.0.1',
             sender         => 'test@example.com',
             recipient      => 'test@example.org',
         });
-        ok(defined $reply, 'make request to postgrey');
+        ok(defined $reply, 'send request');
         is($reply, "DEFER_IF_PERMIT Greylisted, see http://postgrey.schweikert.ch/help/example.org.html", "verify greylisted");
     }
 
-    sleep(1.1);
+    $client->advance_time(310);
 
-    # We have '--delay=1', so it should be ok after 1 second
     {
-        my $reply = request($socket_path, {
+        my $reply = $client->request({
             client_name    => 'test1.example.com',
             client_address => '192.168.0.1',
             sender         => 'test@example.com',
             recipient      => 'test@example.org',
         });
-        ok(defined $reply, 'make request to postgrey');
-        like($reply, qr{PREPEND X-Greylist: delayed [12] seconds}, "verify pass");
+        ok(defined $reply, 'send request');
+        like($reply, qr{PREPEND X-Greylist: delayed 31[0123] seconds}, "verify pass");
+    }
+
+    # We should also pass when coming from different IP but same /24 network
+    {
+        my $reply = $client->request({
+            client_name    => 'test1.example.com',
+            client_address => '192.168.0.2',
+            sender         => 'test@example.com',
+            recipient      => 'test@example.org',
+        });
+        ok(defined $reply, 'send request');
+        is($reply, 'DUNNO', 'verify pass (same subnet)');
+    }
+
+    # We should not pass when coming from a completely different IP
+    {
+        my $reply = $client->request({
+            client_name    => 'test1.example.com',
+            client_address => '10.1.0.2',
+            sender         => 'test@example.com',
+            recipient      => 'test@example.org',
+        });
+        ok(defined $reply, 'send request');
+        like($reply, qr{^DEFER_IF_PERMIT}, 'verify greylist (different ip)');
     }
 }
 

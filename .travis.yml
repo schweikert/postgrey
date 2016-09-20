@@ -12,8 +12,6 @@ install:
     - cpanm install --quiet --notest BerkeleyDB
     - cpanm install --quiet --notest Net::Server::Multiplex
     - cpanm install --quiet --notest NetAddr::IP
-    - cpanm install --notest File::Slurper
+    - cpanm install --quiet --notest File::Slurper
 script:
-    - ls -lR $HOME/perl5
-    - env
-    - test/test.pl
+    - perl test/test.pl

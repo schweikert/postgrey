@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use lib '.';
-use local::lib;
+use lib "$ENV{HOME}/perl5/lib/perl5";
 
 use Test::More;
 use File::Temp;

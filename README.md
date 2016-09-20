@@ -1,0 +1,37 @@
+[![Build Status](https://api.travis-ci.org/schweikert/postgrey.svg)](https://travis-ci.org/schweikert/postgrey)
+
+# Postgrey - a Postfix policy server for greylisting
+
+## Requirements
+
+- Perl >= 5.6.0
+- Net::Server (Perl Module)
+- IO::Multiplex (Perl Module)
+- BerkeleyDB (Perl Module)
+- Berkeley DB >= 4.1 (Library)
+- Digest::SHA (Perl Module, only for --privacy option)
+- NetAddr::IP
+
+
+## Documentation
+
+See POD documentation in postgrey. Execute:
+
+    perldoc postgrey
+
+See also Postgrey's homepage:
+
+    http://postgrey.schweikert.ch/
+
+
+## Mailing-List and getting Help
+
+There is a mailing-list for the discussion of postgrey, where you can
+also ask for help in case of trouble. To subscribe, send a mail with
+subject 'subscribe' to:
+
+    postgrey-request@list.ee.ethz.ch 
+  
+There is also a mailing-list archive, where you might find answers:
+
+   http://lists.ee.ethz.ch/wws/arc/postgrey

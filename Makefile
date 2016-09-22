@@ -1,5 +1,5 @@
 MAJOR   := 1
-MINOR   := 36
+MINOR   := 37
 VERSION := $(MAJOR).$(MINOR)
 DATE    := $(shell date +%Y-%m-%d)
 

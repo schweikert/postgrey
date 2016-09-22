@@ -1,12 +1,14 @@
-* UNRELEASED
+* 2016-09-22: version 1.37
+   - added initial test suite
+   - testing using travis-ci (https://travis-ci.org/schweikert/postgrey)
    - removed IP pool-detection code for --lookup-by-net, because it matched
      also the naming of some big hosters like facebook (#32, Michal Petrucha,
      Andrew Ayer, Jon Sailor)
-   - updated whitelist
-   - add whitelist for Office 365 (Holger Stember)
    - fix early logging of errors and warnings to syslog
    - simplified IP matching code
    - added support for IPv6 whitelists with netmask
+   - add network-range based whitelist for Office 365 (Holger Stember)
+   - updated whitelist
  
 * 2015-09-01: version 1.36
    - improved support for IPv6 addresses: new --ipv4cidr and --ipv6cidr options

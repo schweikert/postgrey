@@ -55,3 +55,5 @@ for(my $i=0; $i<10; $i++) {
     sleep(1);
 }
 ok(kill(0, $pid) == 0, "postgrey is stopped");
+
+Test_Whitelists::run_tests_post_stop($client, $tmpdir);

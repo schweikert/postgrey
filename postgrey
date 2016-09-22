@@ -172,7 +172,7 @@ sub do_client_substitutions($$$)
         warn "NetAddr::IP->bits() neither 32 nor 128???\n";
         return ($ip, undef);
     }
-    return ($ipaddr->network, undef);
+    return ($ipaddr->network()->addr(), undef);
 }
 
 sub mylog($$$)
@@ -329,29 +329,39 @@ sub smtpd_access_policy($$)
     # not in a regular postfix query connection
     if(defined $attr->{policy_test_time}) { $now = $attr->{policy_test_time} }
 
-    # parse "client_address" into a NetAddr::IP object
-    if(defined($attr->{client_address})) {
-        my $addr = NetAddr::IP->new($attr->{client_address});
-        defined $attr->{client_address} or do {
-            warn "can't parse client_address from postfix: $attr->{client_address}\n";
+    # make sure that important attributes are defined
+    for my $a (qw(client_address client_name recipient sender)) {
+        defined $attr->{$a} or do {
+            warn "attribute missing: $a\n";
             return 'DUNNO';
         };
-        $attr->{client_address} = $addr;
     }
 
-    # whitelists
+    # parse "client_address" into a NetAddr::IP object
+    my $ip = NetAddr::IP->new($attr->{client_address});
+    defined $attr->{client_address} or do {
+        warn "can't parse client_address from postfix: $attr->{client_address}\n";
+        return 'DUNNO';
+    };
+    $attr->{client_address_ip} = $ip;
+
+    # whitelists: client name
     for my $w (@{$self->{postgrey}{whitelist_clients}}) {
         if($attr->{client_name} =~ $w) {
             $self->mylog_action($attr, 'pass', 'client whitelist');
             return 'DUNNO';
         }
     }
+
+    # whitelists: client ip
     for my $w (@{$self->{postgrey}{whitelist_ips}}) {
-        if($attr->{client_address}->within($w)) {
+        if($attr->{client_address_ip}->within($w)) {
             $self->mylog_action($attr, 'pass', 'client whitelist');
             return 'DUNNO';
         }
     }
+
+    # whitelists: recipient
     for my $w (@{$self->{postgrey}{whitelist_recipients}}) {
         if($attr->{recipient} =~ $w) {
             $self->mylog_action($attr, 'pass', 'recipient whitelist');
@@ -363,7 +373,7 @@ sub smtpd_access_policy($$)
     my ($cawl_db, $cawl_key, $cawl_count, $cawl_last);
     if($self->{postgrey}{awl_clients}) {
         $cawl_db  = $self->{postgrey}{db_cawl};
-        $cawl_key = $attr->{client_address};
+        $cawl_key = $attr->{client_address_ip}->addr();
         if ($self->{postgrey}{privacy}) {
              $cawl_key = Digest::SHA::sha1_hex($cawl_key);
         }
@@ -385,7 +395,7 @@ sub smtpd_access_policy($$)
     # lookup
     my $sender = $self->do_sender_substitutions($attr->{sender});
     my ($client_net, $client_host) =
-        $self->do_client_substitutions($attr->{client_address}, $attr->{client_name});
+        $self->do_client_substitutions($attr->{client_address_ip}, $attr->{client_name});
     my $key    = lc "$client_net/$sender/$attr->{recipient}";
     if ($self->{postgrey}{privacy}) {
         $key = Digest::SHA::sha1_hex($key);
@@ -440,8 +450,8 @@ sub smtpd_access_policy($$)
                 $cawl_count++;
                 $cawl_db->{$cawl_key}=$cawl_count.','.$now;
                 my $client = $attr->{client_name} ?
-                    $attr->{client_name}.'['.$attr->{client_address}.']' :
-                    $attr->{client_address};
+                    $attr->{client_name}.'['.$attr->{client_address_ip}->addr().']' :
+                    $attr->{client_address_ip}->addr();
                 $self->mylog(1, "whitelisted: $client")
                     if $cawl_count==$self->{postgrey}{awl_clients};
             }
@@ -469,10 +479,6 @@ sub smtpd_access_policy($$)
 
     # X-Greylist header:
     if(!$last_was_successful and $self->is_new_instance($attr->{instance})) {
-        # syslog
-        my $client = ($attr->{client_name} and $attr->{client_name} ne 'unknown') ?
-                     $attr->{client_name} : $attr->{client_address};
-
         # add X-Greylist header
         my $date = strftime("%a, %d %b %Y %T %Z", localtime);
         my $delay = $now-$first;

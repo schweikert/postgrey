@@ -3,6 +3,7 @@ package Test_Greylist;
 use strict;
 use Test::More;
 use Time::HiRes;
+use BerkeleyDB;
 
 our $tests = 8;
 
@@ -50,13 +51,18 @@ sub run_tests {
     {
         my $reply = $client->request({
             client_name    => 'test1.example.com',
-            client_address => '10.1.0.2',
+            client_address => '10.1.50.2',
             sender         => 'test@example.com',
             recipient      => 'test@example.org',
         });
         ok(defined $reply, 'send request');
         like($reply, qr{^DEFER_IF_PERMIT}, 'verify greylist (different ip)');
     }
+}
+
+sub run_tests_post_stop {
+    # verify content of db
+
 }
 
 1;

@@ -238,8 +238,8 @@ outlook.com
 # 2015-08-19 (big pool)
 mail.alibaba.com
 mail.aliyun.com
-# 2016-09-13: amazonses.com (github #35, #37)
-smtp-out.amazonses.com
+# 2016-09-13: amazonses.com (github #35, #37, #38)
+amazonses.com
 # 2016-09-13: startcom.org (github #7)
 startcom.org
 # 2016-09-20: Microsoft Exchange Online (Office 365), by IP
@@ -273,4 +273,4 @@ startcom.org
 2a01:111:f400:7c00::/54
 2a01:111:f400:fc00::/54
 # 2016-10-28: Microsoft Exchange Online (Office 365), by Name
-/^mail-.*\.outbound\.protection\.outlook\.com$/
+outbound.protection.outlook.com

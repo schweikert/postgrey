@@ -242,7 +242,7 @@ mail.aliyun.com
 smtp-out.amazonses.com
 # 2016-09-13: startcom.org (github #7)
 startcom.org
-# 2016-09-20: Microsoft Exchange Online (Office 365)
+# 2016-09-20: Microsoft Exchange Online (Office 365), by IP
 23.103.132.0/22
 23.103.136.0/21
 23.103.144.0/20
@@ -272,3 +272,5 @@ startcom.org
 216.32.180.0/23
 2a01:111:f400:7c00::/54
 2a01:111:f400:fc00::/54
+# 2016-10-28: Microsoft Exchange Online (Office 365), by Name
+/^mail-.*\.outbound\.protection\.outlook\.com$/

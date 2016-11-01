@@ -274,3 +274,5 @@ startcom.org
 2a01:111:f400:fc00::/54
 # 2016-10-28: Microsoft Exchange Online (Office 365), by Name
 outbound.protection.outlook.com
+# 2016-11-01: gem.godaddy.com (github #39)
+gem.godaddy.com

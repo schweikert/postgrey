@@ -276,3 +276,6 @@ startcom.org
 outbound.protection.outlook.com
 # 2016-11-01: gem.godaddy.com (github #39)
 gem.godaddy.com
+# 2016-11-16: github long retry (github #41)
+github.com
+github.net

@@ -279,3 +279,5 @@ gem.godaddy.com
 # 2016-11-16: github long retry (github #41)
 github.com
 github.net
+# 2017-01-06: biglumber.com, sends verification email and doesn't retry
+206.222.31.58

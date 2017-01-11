@@ -281,3 +281,5 @@ github.com
 github.net
 # 2017-01-06: biglumber.com, sends verification email and doesn't retry
 206.222.31.58
+# 2017-01-11: battle.net (long retry, #44)
+battle.net

@@ -131,17 +131,17 @@ sub do_sender_substitutions($$)
     # BATV is defined as prvs=tag-val=loc-core@, but sometimes shows up
     # as prvs=loc-core=tag-val@...
     if ($user =~ /^prvs=/) {
-	my @a = split(/=/, $user);
-	if ($#a == 2) {
-	    if ($a[1] =~ /^[0-9a-z]{10}/ && $a[2] !~ /^[0-9a-z]{10}/) {
-		$user = $a[2];
-	    } elsif ($a[2] =~ /^[0-9a-z]{10}/ && $a[1] !~ /^[0-9a-z]{10}/) {
-		$user = $a[1];
-	    } else {
-		# throw a coin, pick the standard
-		$user = $a[2];
-	    }
-	}
+        my @a = split(/=/, $user);
+        if ($#a == 2) {
+            if ($a[1] =~ /^[0-9a-z]{10}/ && $a[2] !~ /^[0-9a-z]{10}/) {
+                $user = $a[2];
+            } elsif ($a[2] =~ /^[0-9a-z]{10}/ && $a[1] !~ /^[0-9a-z]{10}/) {
+                $user = $a[1];
+            } else {
+                # throw a coin, pick the standard
+                $user = $a[2];
+            }
+        }
     }
 
     # strip extension, used sometimes for mailing-list VERP
@@ -267,7 +267,7 @@ sub do_maintenance($$)
         $db_obj->Txn($txn);
         for my $key (@old_keys) { delete $db->{$key}; }
         $txn->txn_commit();
-        
+
         $self->mylog(1, "cleaning main database finished. before: $nr_keys_before, after: $nr_keys_after");
 
         if($self->{postgrey}{awl_clients}) {
@@ -312,7 +312,7 @@ sub is_new_instance($$)
 
     my $i = $self->{postgrey}{instances};
     return 0 if scalar grep { $_ eq $inst } @$i;
-    
+
     # put new value into the array
     unshift @$i, $inst;
     pop @$i;
@@ -379,7 +379,7 @@ sub smtpd_access_policy($$)
         }
         my $cawl_val = $cawl_db->{$cawl_key};
         ($cawl_count, $cawl_last) = split(/,/,$cawl_val) if defined $cawl_val;
-        
+
         # whitelist if count is enough
         if(defined $cawl_count and $cawl_count >= $self->{postgrey}{awl_clients})
         {
@@ -509,7 +509,7 @@ sub main()
         'verbose|v', 'quiet|q', 'daemonize|d',
         'unix|u=s', 'inet|i=s', 'socketmode=s',
         'user=s', 'group=s', 'dbdir=s', 'pidfile=s', 'delay=i', 'max-age=i',
-        'lookup-by-subnet', 'lookup-by-host', 'ipv4cidr=i', 'ipv6cidr=i', 'auto-whitelist-clients:s', 
+        'lookup-by-subnet', 'lookup-by-host', 'ipv4cidr=i', 'ipv6cidr=i', 'auto-whitelist-clients:s',
         'whitelist-clients=s@', 'whitelist-recipients=s@',
         'syslogfacility|syslog-facility|facility=s',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
@@ -617,7 +617,7 @@ sub main()
             last_maint_keys  => 0, # do it on the first night
             lookup_by_host   => $opt{'lookup-by-host'},
             ipv4cidr         => $opt{'ipv4cidr'} || 24,
-            ipv6cidr         => $opt{'ipv6cidr'} || 64,            
+            ipv6cidr         => $opt{'ipv6cidr'} || 64,
             awl_clients      => defined $opt{'auto-whitelist-clients'} ?
                 ($opt{'auto-whitelist-clients'} ne '' ?
                     $opt{'auto-whitelist-clients'} : 5) : 5,
@@ -758,7 +758,7 @@ sub mux_input()
 
                 # attempt maintenance if one hour has passed since the last one
                 my $server = $self->{net_server};
-                if($server->{postgrey}{last_maint} && 
+                if($server->{postgrey}{last_maint} &&
                     $now-$server->{postgrey}{last_maint} >= 3600)
                 {
                     $server->{postgrey}{last_maint} = $now;
@@ -769,7 +769,7 @@ sub mux_input()
                 if ($self->{net_server}->{postgrey}{exim}) {
                     close($fh);
                     last;
-                } 
+                }
             }
             $self->{postgrey_attr} = {};
         }
@@ -831,7 +831,7 @@ B<postgrey> [I<options>...]
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
      --whitelist-recipients=FILE  default: /etc/postfix/postgrey_whitelist_recipients
      --auto-whitelist-clients=N   whitelist host after first successful delivery
-                                  N is the minimal count of mails before a client is 
+                                  N is the minimal count of mails before a client is
                                   whitelisted (turned on by default with value 5)
                                   specify N=0 to disable.
      --listen-queue-size=N        allow for N waiting connections to our socket
@@ -1033,7 +1033,7 @@ following special variables will be replaced in the text:
 
 =item %t
 
-How many seconds the mail has been delayed due to greylisting. 
+How many seconds the mail has been delayed due to greylisting.
 
 =item %v
 

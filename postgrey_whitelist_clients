@@ -198,6 +198,8 @@ yahoo.com
 /^outmail\d+\.sctm\.tfbnw\.net$/
 # 2016-09-13: facebook (updated names, github #30)
 outmail.facebook.com
+# 2017-02-03: facebook (other names, reported by Harald Paulsen)
+outappmail.facebook.com
 # 2009-02-10: server14.cyon.ch (long retry, reported by Alex Beckert)
 server14.cyon.ch
 # 2009-08-19: 126.com (big pool)

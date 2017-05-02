@@ -287,3 +287,5 @@ github.net
 battle.net
 # 2017-02-09: twitter.com (big pool, #46)
 twitter.com
+# 2017-05-02: rrze.uni-erlangen.de (University Erlangen-Nuremberg (fau.de) uses different IPv4 and IPv6 addresses for their Mailserver)
+rrze.uni-erlangen.de

@@ -289,3 +289,5 @@ battle.net
 twitter.com
 # 2017-05-02: rrze.uni-erlangen.de (University Erlangen-Nuremberg (fau.de) uses different IPv4 and IPv6 addresses for their Mailserver)
 rrze.uni-erlangen.de
+# 2017-05-18: ovh.net (large pool, repoted by Tobias Hannaske)
+mail-out.ovh.net

@@ -443,7 +443,7 @@ sub smtpd_access_policy($$)
     #   - client whitelisted already? -> update last-seen timestamp
     if($self->{postgrey}{awl_clients}) {
         # greylisting succeeded
-        if($diff <= 0 and !$last_was_successful) {
+        if($diff <= 0 and $last_was_successful) {
             # enough time has passed (record only one attempt per hour)
             if(! defined $cawl_last or $now >= $cawl_last + 3600) {
                 # ok, increase count

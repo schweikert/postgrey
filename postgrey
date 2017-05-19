@@ -654,7 +654,7 @@ sub main()
         require Digest::SHA;
     }
 
-    $0 = join(' ', @{$server->{server}{commandline}});
+    $0 = 'postgrey';
     $server->run;
 
     # shouldn't get here

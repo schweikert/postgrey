@@ -236,6 +236,9 @@ sub do_maintenance($$)
     if($hour > 1 and $hour < 7 and
         $now - $self->{postgrey}{last_maint_keys} >= 82800)
     {
+        # Disable Sync after each delete
+        $db_env->set_flags(BerkeleyDB::DB_TXN_NOSYNC, 1);
+
         $self->mylog(1, "cleaning up old entries...");
         my $max_age = $self->{postgrey}{max_age};
         my $retry_window = $self->{postgrey}{retry_window};
@@ -294,6 +297,9 @@ sub do_maintenance($$)
 
             $self->mylog(1, "cleaning clients database finished. before: $nr_keys_before, after: $nr_keys_after");
         }
+
+        # Reenable sync
+        $db_env->set_flags(BerkeleyDB::DB_TXN_NOSYNC, 0);
 
         $self->{postgrey}{last_maint_keys}=$now;
     }

@@ -291,3 +291,5 @@ twitter.com
 rrze.uni-erlangen.de
 # 2017-05-18: ovh.net (large pool, repoted by Tobias Hannaske)
 mail-out.ovh.net
+# 2017-06-07: evanzo-server.de (no retry, reported by Patrick Terlisten)
+/^smarthost.*\.evanzo-server\.de$

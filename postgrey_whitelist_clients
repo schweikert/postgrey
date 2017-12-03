@@ -231,6 +231,7 @@ mout-xforward.kundenserver.de
 mout-xforward.perfora.net
 # 2014-12-18: mail.ru (retries from fallback*.mail.ru, reported by Andriy Yurchuk)
 /^fallback\d+\.mail\.ru$/
+/^fallback\d+\.m\.smailru\.net$/
 # French tax authority, no retry
 dgfip.finances.gouv.fr 
 # 2015-06-10: magisto.com (requested by postmaster)

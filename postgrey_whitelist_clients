@@ -200,6 +200,8 @@ yahoo.com
 outmail.facebook.com
 # 2017-02-03: facebook (other names, reported by Harald Paulsen)
 outappmail.facebook.com
+# 2018-01-12: facebook (other names, reported by Pascal Herbert)
+mail-mail.facebook.com
 # 2009-02-10: server14.cyon.ch (long retry, reported by Alex Beckert)
 server14.cyon.ch
 # 2009-08-19: 126.com (big pool)

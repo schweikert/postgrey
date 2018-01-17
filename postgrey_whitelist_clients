@@ -294,3 +294,13 @@ rrze.uni-erlangen.de
 mail-out.ovh.net
 # 2017-06-07: evanzo-server.de (no retry, reported by Patrick Terlisten)
 /^smarthost.*\.evanzo-server\.de$
+# 2018-01-16: Microsoft Exchange Online - German Pool (large pool, reported by Alexander Wilms)
+51.4.72.0/24
+51.5.72.0/24
+51.4.80.0/27
+51.5.80.0/27
+2a01:4180:4051:0800::/64
+2a01:4180:4050:0800::/64
+2a01:4180:4051:0400::/64
+2a01:4180:4050:0400::/64
+protection.outlook.de

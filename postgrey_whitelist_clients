@@ -306,3 +306,5 @@ mail-out.ovh.net
 2a01:4180:4051:0400::/64
 2a01:4180:4050:0400::/64
 protection.outlook.de
+# 2018-04-25: Mailchimp test newsletter (unique sender each time)
+systemalerts.mailchimp.com

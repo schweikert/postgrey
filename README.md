@@ -2,6 +2,12 @@
 
 # Postgrey - a Postfix policy server for greylisting
 
+**`postgrey`** (written in Perl) is a [Postfix](http://www.postfix.org/) [policy server](http://www.postfix.org/SMTPD_POLICY_README.html) implementing
+[greylisting](https://www.greylisting.org/) developed by [David Schweikert](http://david.schweikert.ch/)
+
+- Homepage = http://postgrey.schweikert.ch/
+- Project + Issues = https://github.com/schweikert/postgrey
+
 ## Requirements
 
 - Perl >= 5.6.0
@@ -13,15 +19,14 @@
 - NetAddr::IP
 
 
-## Documentation
+## Dev Documentation
 
-See POD documentation in postgrey. Execute:
+To see POD documentation in postgrey. Execute:
+```bash
+perldoc postgrey
+```
 
-    perldoc postgrey
-
-See also Postgrey's homepage:
-
-    http://postgrey.schweikert.ch/
+    
 
 
 ## Mailing-List and getting Help

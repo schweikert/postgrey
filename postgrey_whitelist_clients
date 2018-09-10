@@ -310,3 +310,5 @@ mail-out.ovh.net
 protection.outlook.de
 # 2018-04-25: Mailchimp test newsletter (unique sender each time)
 systemalerts.mailchimp.com
+# 2018-09-02: reflexion.net (large pool, reported by @shiz0)
+reflexion.net

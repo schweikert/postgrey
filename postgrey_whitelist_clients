@@ -312,3 +312,7 @@ protection.outlook.de
 systemalerts.mailchimp.com
 # 2018-09-02: reflexion.net (large pool, reported by @shiz0)
 reflexion.net
+# 2018-09-23: Mailchimp (large pool)
+205.201.128.0/20
+198.2.128.0/18
+148.105.0.0/16

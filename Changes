@@ -1,3 +1,6 @@
+* UNRELEASED
+   - new Postgrey logo contributed by Frederick Jost Zweig, thanks!
+
 * 2016-09-22: version 1.37
    - added initial test suite
    - testing using travis-ci (https://travis-ci.org/schweikert/postgrey)

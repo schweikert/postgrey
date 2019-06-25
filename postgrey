@@ -957,6 +957,16 @@ anything that matches C<regexp> (the full address is matched).
 
 =back
 
+=head2 Updating the postgrey default whitelist
+
+You can find at the following URL the latest whitelist that is included
+in the Postgrey distribution:
+
+L<https://postgrey.schweikert.ch/pub/postgrey_whitelist_clients>
+
+If you fetch this list automatically, please make sure that you don't do it too
+frequently (updating once a day is ok).
+
 =head2 Auto-whitelisting clients
 
 With the option --auto-whitelist-clients a client IP address will be

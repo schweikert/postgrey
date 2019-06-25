@@ -2,6 +2,8 @@
 
 # Postgrey - a Postfix policy server for greylisting
 
+![postgrey logo](postgrey_logo.png)
+
 **`postgrey`** (written in Perl) is a [Postfix](http://www.postfix.org/) [policy server](http://www.postfix.org/SMTPD_POLICY_README.html) implementing
 [greylisting](https://www.greylisting.org/) developed by [David Schweikert](http://david.schweikert.ch/)
 

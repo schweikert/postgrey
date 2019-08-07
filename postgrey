@@ -26,6 +26,37 @@ use vars qw(@ISA);
 my $VERSION = '1.37';
 my $DEFAULT_DBDIR = '/var/spool/postfix/postgrey';
 my $CONFIG_DIR = '/etc/postfix';
+my $dns_resolver;
+
+sub reverse_dotted_quad {
+    # This is the sub _chkValidPublicIP from Net::DNSBL by PJ Goodwin
+    # at http://www.the42.net/net-dnsbl.
+    my ($quad) = @_;
+    if ($quad =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+        my ($ip1,$ip2,$ip3,$ip4) = ($1, $2, $3, $4);
+        if (
+           $ip1 == 10 ||                               #10.0.0.0/8 (10/8)
+          ($ip1 == 172 && $ip2 >= 16 && $ip2 <= 31) || #172.16.0.0/12 (172.16/12)
+          ($ip1 == 192 && $ip2 == 168) ||              #192.168.0.0/16 (192.168/16)
+           $quad eq '127.0.0.1'                        # localhost
+           ) {
+            # toss the RFC1918 specified privates
+            return undef;
+        } elsif (
+          ($ip1 <= 1 || $ip1 > 254) ||
+          ($ip2 < 0  || $ip2 > 255) ||
+          ($ip3 < 0  || $ip3 > 255) ||
+          ($ip4 < 0  || $ip4 > 255)
+           ) {
+            #invalid oct, toss it;
+            return undef;
+        }
+        my $revquad = $ip4 . "." . $ip3 . "." . $ip2 . "." . $ip1;
+        return $revquad;
+    } else { # invalid quad
+        return undef;
+    }
+}
 
 sub read_clients_whitelists($)
 {
@@ -369,6 +400,25 @@ sub smtpd_access_policy($$)
         }
     }
 
+    # whitelist clientsin dnswl.org
+    my $revip = reverse_dotted_quad($attr->{client_address});
+    if ($self->{postgrey}{dnswl} && $revip) { # valid IP / plausibly in DNSWL
+        my $answer = $dns_resolver->send($revip . '.list.dnswl.org');
+        if ($answer && scalar($answer->answer) > 0) {
+            my @rrs = $answer->answer;
+            if ($rrs[0]->type eq 'A' && $rrs[0]->address ne '127.0.0.255') {
+                # Address appears in DNSWL. (127.0.0.255 means we were rate-limited.)
+                my $code = $rrs[0]->address;
+                if ($code =~ /^127.0.(\d+)\.([0-3])$/) {
+                    my %dnswltrust = (0 => 'legitimate', 1 => 'occasional spam', 2 => 'rare spam', 3 => 'highly unlikely to send spam');
+                    $code = $2 . '/' . $dnswltrust{$2};
+                }
+                $self->mylog_action($attr, 'pass', 'client whitelisted by dnswl.org (' . $code . ')');
+                return 'DUNNO';
+            }
+        }
+    }
+
     # auto whitelist clients (see below for explanation)
     my ($cawl_db, $cawl_key, $cawl_count, $cawl_last);
     if($self->{postgrey}{awl_clients}) {
@@ -514,6 +564,7 @@ sub main()
         'syslogfacility|syslog-facility|facility=s',
         'retry-window=s', 'greylist-action=s', 'greylist-text=s', 'privacy',
         'hostname=s', 'exim', 'listen-queue-size=i', 'x-greylist-header=s',
+        'dnswl',
     ) or exit(1);
     # note: lookup-by-subnet can be given for compatibility, but it is default
     # so do not do nothing with it...
@@ -630,6 +681,7 @@ sub main()
             whitelist_recipients_files => $opt{'whitelist-recipients'} ||
                 [ "$CONFIG_DIR/postgrey_whitelist_recipients" ],
             privacy => defined $opt{'privacy'},
+            dnswl => defined $opt{'dnswl'},
             hostname => defined $opt{hostname} ? $opt{hostname} : hostname,
             exim => defined $opt{'exim'},
             x_greylist_header  => $opt{'x-greylist-header'} || 'X-Greylist: delayed %t seconds by postgrey-%v at %h; %d',
@@ -652,6 +704,12 @@ sub main()
     # --privacy requires Digest::SHA
     if($opt{'privacy'}) {
         require Digest::SHA;
+    }
+
+    # --dnswl requires Net::DNS  for DNSWL.org whitelisting
+    if($opt{'dnswl'}) {
+        require Net::DNS;
+        $dns_resolver = Net::DNS::Resolver->new;
     }
 
     $0 = join(' ', @{$server->{server}{commandline}});
@@ -826,6 +884,7 @@ B<postgrey> [I<options>...]
      --ipv6cidr=N        What cidr to use for the subnet on IPv6 addresses when using lookup-by-subnet (default: 64)
      --lookup-by-host    do not strip the last 8 bits from IP addresses
      --privacy           store data using one-way hash functions
+     --dnswl             whitelist clients in dnswl.org (WARNING: runs synchronously and has an impact on performance)
      --hostname=NAME     set the hostname (default: `hostname`)
      --exim              don't reuse a socket for more than one query (exim compatible)
      --whitelist-clients=FILE     default: /etc/postfix/postgrey_whitelist_clients
@@ -1064,6 +1123,11 @@ The host.
 The --privacy option enable the use of a SHA1 hash function to store
 IPs and emails in the greylisting database.  This will defeat straight
 forward attempts to retrieve mail user behaviours.
+
+=head2 DNSWL
+
+The --dnswl option automatically whitelists based on dnswl.org entries
+Since it uses Net::DNS synchronously it may have an impact on performance.
 
 =head2 SEE ALSO
 

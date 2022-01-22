@@ -166,8 +166,7 @@ smtp.liberal.ca
 # rambler.ru (big pool, reported by Michael Monnerie)
 rambler.ru
 # free.fr (big pool, reported by Denis Sacchet)
-/^smtp[0-9]+-g[0-9]+\.free\.fr$/
-/^postfix[0-9]+-g[0-9]+\.free\.fr$/
+/^(?:smtp\w*|postfix)[0-9]+-g[0-9]+\.free\.fr$/
 # thehartford.com (pool + long retry, reported by Jacob Leifman)
 /^netmail\d+\.thehartford\.com$/
 # abb.com (only one retry, reported by Roman Plessl)

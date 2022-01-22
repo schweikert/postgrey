@@ -299,3 +299,5 @@ mailgun.us
 mail.infomaniak.ch
 # 2022-01-22: barracuda.com (large pool, #90)
 barracuda.com
+# 2022-01-22: smtp2go.com (large pool, #92)
+smtp2go.com

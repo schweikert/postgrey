@@ -48,7 +48,7 @@ cs.columbia.edu
 # 2004-07-02: papersinvited.com (no retry)
 66.216.126.174
 # 2004-07-02: telekom.de (slow: 6 hours)
-/^mail\d+\.telekom\.de$/
+/^mail(out)?\d+\.telekom\.de$/
 # 2004-07-04: tiscali.dk (slow: 12 hours, reported by Klaus Alexander Seistrup)
 /^smtp\d+\.tiscali\.dk$/
 # 2004-07-04: freshmeat.net (address verification)
